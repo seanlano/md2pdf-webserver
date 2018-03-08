@@ -1,0 +1,460 @@
+% Example LaTeX template for use with md2pdf-webserver.
+%
+% This template is originally based on the default Pandoc template, available at
+% https://github.com/jgm/pandoc/blob/master/data/templates/default.latex
+% The small icons used are from http://publicicons.org/
+%
+% It has a number of modifications to serve as a basis for possible work-related
+% documents. You can and should further modify this file to suit your uses, the
+% defaults are a little bit ugly and use generic logos and icons.
+%
+% Since this file is from Pandoc originally, it is only GPLv2+ licensed - it is
+% not using the more restrictive AGPLv3+ license like the rest of md2pdf.
+
+\documentclass[11pt,$if(lang)$$babel-lang$,$endif$a4paper,twoside,$for(classoption)$$classoption$$sep$,$endfor$]{memoir}
+
+$if(linestretch)$
+\usepackage{setspace}
+\setstretch{$linestretch$}
+$endif$
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[$if(fontenc)$$fontenc$$else$T1$endif$]{fontenc}
+  \usepackage[utf8]{inputenc}
+$if(euro)$
+  \usepackage{eurosym}
+$endif$
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+$if(euro)$
+  \newcommand{\euro}{€}
+$endif$
+
+$if(mathfont)$
+    \setmathfont(Digits,Latin,Greek)[$for(mathfontoptions)$$mathfontoptions$$sep$,$endfor$]{$mathfont$}
+$endif$
+$if(CJKmainfont)$
+    \usepackage{xeCJK}
+    \setCJKmainfont[$for(CJKoptions)$$CJKoptions$$sep$,$endfor$]{$CJKmainfont$}
+$endif$
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+
+\usepackage{hyperref}
+$if(colorlinks)$
+\PassOptionsToPackage{usenames,dvipsnames}{color} % color is loaded by hyperref
+$endif$
+\hypersetup{unicode=true,
+$if(title-meta)$
+            pdftitle={$title$ – $subtitle$},
+$endif$
+$if(author-meta)$
+            pdfauthor={$author-meta$},
+$endif$
+$if(keywords)$
+            pdfkeywords={$for(keywords)$$keywords$$sep$; $endfor$},
+$endif$
+$if(colorlinks)$
+            colorlinks=true,
+            linkcolor=$if(linkcolor)$$linkcolor$$else$Maroon$endif$,
+            citecolor=$if(citecolor)$$citecolor$$else$Blue$endif$,
+            urlcolor=$if(urlcolor)$$urlcolor$$else$Blue$endif$,
+$else$
+            pdfborder={0 0 0},
+$endif$
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+$if(lang)$
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[shorthands=off,$for(babel-otherlangs)$$babel-otherlangs$,$endfor$main=$babel-lang$]{babel}
+$if(babel-newcommands)$
+  $babel-newcommands$
+$endif$
+\else
+  \usepackage{polyglossia}
+  \setmainlanguage[$polyglossia-lang.options$]{$polyglossia-lang.name$}
+$for(polyglossia-otherlangs)$
+  \setotherlanguage[$polyglossia-otherlangs.options$]{$polyglossia-otherlangs.name$}
+$endfor$
+\fi
+$endif$
+$if(natbib)$
+\usepackage{natbib}
+\bibliographystyle{$if(biblio-style)$$biblio-style$$else$plainnat$endif$}
+$endif$
+$if(biblatex)$
+\usepackage$if(biblio-style)$[style=$biblio-style$]$endif${biblatex}
+$if(biblatexoptions)$\ExecuteBibliographyOptions{$for(biblatexoptions)$$biblatexoptions$$sep$,$endfor$}$endif$
+$for(bibliography)$
+\addbibresource{$bibliography$}
+$endfor$
+$endif$
+$if(listings)$
+\usepackage{listings}
+$endif$
+$if(lhs)$
+\lstnewenvironment{code}{\lstset{language=Haskell,basicstyle=\small\ttfamily}}{}
+$endif$
+$if(highlighting-macros)$
+$highlighting-macros$
+$endif$
+$if(verbatim-in-note)$
+\usepackage{fancyvrb}
+\VerbatimFootnotes % allows verbatim text in footnotes
+$endif$
+
+\usepackage{longtable,booktabs}
+
+$if(graphics)$
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+$endif$
+$if(links-as-notes)$
+% Make links footnotes instead of hotlinks:
+\renewcommand{\href}[2]{#2\footnote{\url{#1}}}
+$endif$
+$if(strikeout)$
+\usepackage[normalem]{ulem}
+% avoid problems with \sout in headers with hyperref:
+\pdfstringdefDisableCommands{\renewcommand{\sout}{}}
+$endif$
+$if(indent)$
+$else$
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+$endif$
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+$if(numbersections)$
+\setcounter{secnumdepth}{5}
+$else$
+\setcounter{secnumdepth}{0}
+$endif$
+$if(subparagraph)$
+$else$
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+$endif$
+$if(dir)$
+\ifxetex
+  % load bidi as late as possible as it modifies e.g. graphicx
+  $if(latex-dir-rtl)$
+  \usepackage[RTLdocument]{bidi}
+  $else$
+  \usepackage{bidi}
+  $endif$
+\fi
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \TeXXeTstate=1
+  \newcommand{\RL}[1]{\beginR #1\endR}
+  \newcommand{\LR}[1]{\beginL #1\endL}
+  \newenvironment{RTL}{\beginR}{\endR}
+  \newenvironment{LTR}{\beginL}{\endL}
+\fi
+$endif$
+$for(header-includes)$
+$header-includes$
+$endfor$
+
+
+% Set date formatting
+\usepackage{datetime}
+\newdateformat{dateMMMDDYYYY}{%
+	\monthname[\THEMONTH]\ \THEDAY, \THEYEAR}
+
+
+$if(title)$
+\title{$title$$if(thanks)$\thanks{$thanks$}$endif$}
+$endif$
+$if(subtitle)$
+\providecommand{\subtitle}[1]{}
+\subtitle{$subtitle$}
+$endif$
+$if(author)$
+\author{$for(author)$$author$$sep$ \and $endfor$}
+$endif$
+\date{$if(date)$$date$$else$\dateMMMDDYYYY\today$endif$}
+
+
+$if(title)$
+\usepackage{geometry}
+$endif$
+% Enable embedded EPS images
+\usepackage{epstopdf}
+
+% Set main document fonts
+\setmainfont[Numbers=Uppercase]{FreeSerif} % "Roman" serif font
+\setsansfont[Numbers=Uppercase]{FreeSans} % Sans-serif font
+\setmonofont[Mapping=tex-ansi]{FreeMono} % Monospace font
+% Swap default font family to sans-serif rather than roman
+\renewcommand{\familydefault}{\sfdefault}
+
+
+% Set margins
+\setlrmarginsandblock{3.0cm}{3.5cm}{*}
+\setulmarginsandblock{3.0cm}{3.0cm}{*}
+\setheadfoot{1.1\headheight}{1.1\footskip}
+\clubpenalty=9996
+\widowpenalty=9999
+\brokenpenalty=4991
+\checkandfixthelayout
+
+
+% Use extra spacing between paragraphs
+\nonzeroparskip
+% Don't indent new paragraphs
+\setlength{\parindent}{0pt}
+
+
+% Number sections down to 4th level
+\setsecnumdepth{subsubsection}
+% Use the "hangnum" chapter style and "hangsecnum" for hanging section numbers
+\chapterstyle{hangnum}
+%\hangsecnum
+
+
+% Define custom heading colour
+\usepackage{color}
+\definecolor{CustomGrey}{RGB}{96,96,96}
+\newcommand*{\CustomGrey}{\color{CustomGrey}}
+
+% Define heading font, with normal weight as "Bold"
+\newfontfamily\headingfont{Liberation Sans}[UprightFont = {*-Bold}, ItalicFont = {*-Bold Italic}, BoldFont = {*-Bold}, BoldItalicFont = {*-Bold Italic},]
+% Define heading font, but with a bigger size - for when HUGE is not big enough
+\newfontfamily\enormousheadingfont{Liberation Sans}[UprightFont = {*-Bold}, ItalicFont = {*-Bold Italic}, BoldFont = {*-Bold}, BoldItalicFont = {*-Bold Italic}, Scale = 2]
+% Define header font,
+\newfontfamily\headerfont{Liberation Sans Narrow}
+
+% Re-define "Chapter Number Font"
+\renewcommand*{\chapnumfont}{\headingfont\HUGE\bfseries\CustomGrey}
+% Re-define "Chapter Title Font" - this is used for all section heading font as well
+\renewcommand*{\chaptitlefont}{\headingfont\HUGE\bfseries\raggedright\CustomGrey}
+% Set section heading style
+\setsecheadstyle{\headingfont\raggedright\CustomGrey\LARGE}
+% Set subsection heading style
+\setsubsecheadstyle{\headingfont\raggedright\CustomGrey\Large}
+% Set subsubsection heading style
+\setsubsubsecheadstyle{\headingfont\raggedright\CustomGrey\large}
+
+% Customise captions (show them as italic, in the main font type and size)
+\usepackage[labelfont=it,textfont=it]{caption}
+
+
+% Create macros for logos and headers/footers
+\newcommand{\gearsymbol}{\includegraphics[height=0.5\baselineskip, trim = 0 9 0 0]{gear.eps}}
+\newcommand{\companylogo}{\includegraphics[height=0.6cm]{building.eps}}
+\usepackage{calc}
+\newcommand{\customfooternumright}{\gearsymbol\parbox{\widthof{111}}{\hfill\headerfont\small\itshape\color{Black}\thepage}}
+\newcommand{\customfooternumleft}{\parbox{\widthof{999}}{\headerfont\small\itshape\color{Black}\thepage\hfill}\gearsymbol}
+\newcommand{\customfootercentre}{\headerfont\small\bfseries{$controlled_tagline$}}
+\definecolor{Black}{RGB}{0,0,0}
+
+% Create headers and footers
+\makepagestyle{customheadings}
+
+\makepsmarks{customheadings}{%
+	\nouppercaseheads
+	\createmark{chapter}{both}{shownumber}{}{. \space}
+	\createplainmark{toc}{both}{\contentsname}
+	\createplainmark{lof}{both}{\listfigurename}
+	\createplainmark{lot}{both}{\listtablename}
+	\createplainmark{bib}{both}{\bibname}
+	\createplainmark{index}{both}{\indexname}
+	\createplainmark{glossary}{both}{\glossaryname}
+}
+
+\makeoddhead{customheadings}{\headerfont\color{Black}\textbf{\textit\leftmark}}{}{\companylogo}
+\makeevenhead{customheadings}{\companylogo}{}{\headerfont\color{Black}\textbf{\textit{$title$ – $subtitle$}}}
+\makeoddfoot{customheadings}{\headerfont\small\itshape\color{Black}{$docnum$}}{\customfootercentre}{\customfooternumright}
+\makeevenfoot{customheadings}{\customfooternumleft}{\customfootercentre}{\headerfont\small\itshape{$if(date)$$date$$else$\dateMMMDDYYYY\today$endif$}}
+\makeoddfoot{plain}{\headerfont\small\itshape $docnum$}{\customfootercentre}{\customfooternumright}
+\makeevenfoot{plain}{\customfooternumleft}{\customfootercentre}{\headerfont\small\itshape{$if(date)$$date$$else$\dateMMMDDYYYY\today$endif$}}
+\makeheadrule{customheadings}{\textwidth}{0.4pt}
+\makefootrule{customheadings}{\textwidth}{0.4pt}{\footruleskip}
+\makefootrule{plain}{\textwidth}{0.4pt}{\footruleskip}
+\makeheadfootruleprefix{customheadings}{\color{CustomGrey}}{\color{CustomGrey}}
+\makeheadfootruleprefix{plain}{}{\color{CustomGrey}}
+
+\pagestyle{customheadings}
+
+
+% Fix bullet list spacing (too spaced out by default)
+\usepackage{enumitem}
+\setitemize{topsep=0pt,partopsep=0pt}
+
+
+% Define a macro for glossary heading
+\newcommand{\glossaryheading}{{\newpage\let\clearpage\relax\chapter{Glossary}}}
+
+
+% Tidy up image "float" placement
+\usepackage{float}
+\floatplacement{figure}{!htbp}
+
+
+% Draw grey box around code sections
+\usepackage{soul}
+\definecolor{lightgrey}{RGB}{240,240,240}
+\sethlcolor{lightgrey}
+% Also use the same grey in the syntax highlighting block
+\definecolor{shadecolor}{RGB}{240,240,240}
+
+% This means anything formatted in Markdown with `` marks will be monospace
+% and have a grey box. It will also be non-breaking, which might be a problem.
+\let\oldtexttt\texttt
+\newcommand\codehl[1]{\oldtexttt{\hl{\mbox{#1}}}}
+\renewcommand\texttt[1]{\codehl{#1}}
+
+% Allow wrapping and other nice things in verbatim environments
+% These don't work with syntax highlighting, however
+\tabson[4] % Use 4 spaces to show a "tab"
+\wrappingon
+
+% This will already be included by pandoc if using formatted code - but if input does not have code
+% blocks then compilation will fail. It would be better to test if fancyvrb is defined, but this works
+% and doesn't seem to break anything.
+\usepackage{fancyvrb}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Show line numbers on syntax-highlighted text
+% Note that with syntax highlighting, there is no line wrapping
+\RecustomVerbatimEnvironment{Highlighting}{Verbatim}{numbers=left,numbersep=2mm,commandchars=\\\{\}}
+\renewcommand{\theFancyVerbLine}{\oldtexttt{\tiny\arabic{FancyVerbLine}}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Begin Document
+
+\begin{document}
+% Start "front matter" section
+\frontmatter
+
+
+$if(title)$
+\begin{titlingpage}
+\newgeometry{top=2cm,bottom=2cm,right=2cm,left=2cm}
+
+% Include right-aligned company logo
+\hfill
+\includegraphics[width=8cm]{building.eps}\\[0.2\textheight]
+
+\hbox{
+	\parbox[b]{0.7\textwidth}{ % Confine text to left 70% of page
+		{\enormousheadingfont\Large\bfseries\CustomGrey{$title$}}\\[0.75\baselineskip] % Title
+		{\headingfont\huge\CustomGrey{$subtitle$}} % Subtitle
+	}% end of parbox
+	\hspace*{\fill} % Pad out rest of hbox
+} % end of hbox
+
+\vspace*{\fill} % Push to bottom, so that these attributes are always consistent
+\hbox{
+	\parbox[b]{0.7\textwidth}{ % Confine text to left 70% of page
+		{\hspace*{0.1pt}}{\headerfont{Written by:}}\\[0.2\baselineskip] % Authors
+		{\headingfont\Large{$for(author)$$author$$sep$\\$endfor$}}\\[1.5\baselineskip] % Author name
+		{\hspace*{0.1pt}}{\headerfont{Date:}}\\[0.2\baselineskip]
+		{\headingfont\Large{$if(date)$$date$$else$\dateMMMDDYYYY\today$endif$}}\\[6\baselineskip] % Date
+	}% end of parbox
+	\hspace*{\fill} % Pad out rest of hbox
+} % end of hbox
+
+\end{titlingpage}
+
+\newpage
+\restoregeometry
+$endif$
+
+$if(abstract)$
+\begin{abstract}
+$abstract$
+\end{abstract}
+$endif$
+
+$for(include-before)$
+$include-before$
+
+$endfor$
+$if(toc)$
+{
+	$if(colorlinks)$
+		\hypersetup{linkcolor=$if(toccolor)$$toccolor$$else$black$endif$}
+	$endif$
+	\setcounter{tocdepth}{$toc-depth$}
+	\tableofcontents
+	% Insert a new page after TOC, if using either LOT or LOF
+	$if(lot)$
+		\newpage
+	$else$
+	$if(lof)$
+		\newpage
+	$endif$
+	$endif$
+}
+$endif$
+$if(lot)$
+\listoftables
+$endif$
+$if(lof)$
+\listoffigures
+$endif$
+
+% Start "main matter" section
+\mainmatter
+
+$body$
+
+% Start "back matter" section
+\backmatter
+
+$if(natbib)$
+$if(bibliography)$
+$if(biblio-title)$
+$if(book-class)$
+\renewcommand\bibname{$biblio-title$}
+$else$
+\renewcommand\refname{$biblio-title$}
+$endif$
+$endif$
+\bibliography{$for(bibliography)$$bibliography$$sep$,$endfor$}
+
+$endif$
+$endif$
+$if(biblatex)$
+\printbibliography$if(biblio-title)$[title=$biblio-title$]$endif$
+
+$endif$
+$for(include-after)$
+$include-after$
+
+$endfor$
+\end{document}
