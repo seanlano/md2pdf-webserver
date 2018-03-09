@@ -28,6 +28,7 @@ import string
 import random
 import hashlib
 import logging
+import threading
 import zipfile
 import subprocess
 from ruamel.yaml import YAML
@@ -35,7 +36,6 @@ from ruamel.yaml import YAML
 yaml = YAML()
 
 ## TODO:
-#   - Fix Pandoc subprocess shell redirection / logging
 #   - Spruce up index.html
 #   - Delete temp files after a certain time
 
@@ -191,6 +191,36 @@ def main():
         sys.exit()
 
 
+class PdfWorkerThread(threading.Thread):
+    def __init__(self, md, template):
+        # Initialise the threading.Thread parent
+        super().__init__()
+        # Store the passed objects
+        self.md_file = md
+        self.latex_template = template
+
+    def run(self):
+        basename = os.path.basename(self.md_file)
+        arg = "pandoc --filter pandoc-crossref --pdf-engine=xelatex --template="
+        arg += self.latex_template
+        arg += " -M figPrefix=Figure -M tblPrefix3=Table -M secPrefix=Section -M autoSectionLabels=true --highlight-style=tango '"
+        arg += basename
+        arg += "' -o '"
+        arg += basename.replace("md", "pdf") + "'"
+
+        logging.debug(arg)
+
+        os.chdir(os.path.dirname(self.md_file))
+
+        # Open a log file for the subprocess call
+        with open(basename.replace("md", "log"), 'wt', encoding="utf-8") as log_file:
+            # Run the shell call, and wait for it to end
+            p = subprocess.Popen(arg, shell=True, stdout=log_file, stderr=log_file)
+            p.wait()
+
+    # END run()
+
+
 class App:
     @cherrypy.expose
     def index(self):
@@ -301,12 +331,9 @@ class App:
         if md_path:
             md_basename = os.path.basename(md_path)
             logging.debug("Basename is '%s'", md_basename)
-            arg = "pandoc --filter pandoc-crossref --pdf-engine=xelatex --template=" + def_template + " -M figPrefix=Figure -M tblPrefix3=Table -M secPrefix=Section -M autoSectionLabels=true --highlight-style=tango '" + md_path + "' -o '" + md_basename.replace("md", "pdf") + "'"
-            logging.debug(arg)
-
-            os.chdir(output_path)
-            # This works, but needs tidying up and redirection to proper log files
-            p = subprocess.Popen(arg, shell=True, stderr=subprocess.STDOUT)
+            # Spawn PdfWorkerThread with necessary options
+            thread = PdfWorkerThread(md=md_path, template=def_template)
+            thread.start()
         else:
             report_string = "MD file not found in submitted archive"
 
