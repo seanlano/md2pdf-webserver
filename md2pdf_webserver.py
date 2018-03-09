@@ -29,6 +29,7 @@ import random
 import hashlib
 import logging
 import threading
+import time
 import zipfile
 import subprocess
 from ruamel.yaml import YAML
@@ -191,6 +192,24 @@ def main():
         sys.exit()
 
 
+class DeleteTimerThread(threading.Thread):
+    def __init__(self, folder):
+        # Initialise the threading.Thread parent
+        super().__init__()
+        # Store the passed objects
+        self.folder = folder
+
+    def run(self):
+        # Delete the folder after a 5 minute wait, to save disk space
+        logging.debug("Will remove '%s' in 5 minutes", self.folder)
+        time.sleep(300)
+        logging.info("Removing folder '%s'", self.folder)
+        try:
+            shutil.rmtree(self.folder)
+        except Exception as e:
+            logging.error("An error occurred while removing '%s': %s", self.folder, e)
+
+
 class PdfWorkerThread(threading.Thread):
     def __init__(self, md, template):
         # Initialise the threading.Thread parent
@@ -201,6 +220,7 @@ class PdfWorkerThread(threading.Thread):
 
     def run(self):
         basename = os.path.basename(self.md_file)
+        dirname = os.path.dirname(self.md_file)
         arg = "pandoc --filter pandoc-crossref --pdf-engine=xelatex --template="
         arg += self.latex_template
         arg += " -M figPrefix=Figure -M tblPrefix3=Table -M secPrefix=Section -M autoSectionLabels=true --highlight-style=tango '"
@@ -210,13 +230,17 @@ class PdfWorkerThread(threading.Thread):
 
         logging.debug(arg)
 
-        os.chdir(os.path.dirname(self.md_file))
+        os.chdir(dirname)
 
         # Open a log file for the subprocess call
         with open(basename.replace("md", "log"), 'wt', encoding="utf-8") as log_file:
             # Run the shell call, and wait for it to end
             p = subprocess.Popen(arg, shell=True, stdout=log_file, stderr=log_file)
             p.wait()
+
+        # Spawn a new thread, which will delete the folder after 5 minutes
+        thread = DeleteTimerThread(dirname)
+        thread.start()
 
     # END run()
 
