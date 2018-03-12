@@ -88,9 +88,11 @@ def main():
     ## Read the config file, or create it if it doesn't exist
     # Try and see if we are running as an Ubuntu Snap package
     config_name = "md2pdf_webserver_config.yaml"
+    running_as_snap = False
     try:
         config_path = os.environ["SNAP_COMMON"]
         config_path = os.path.join(config_path, config_name)
+        running_as_snap = True
     except (KeyError):
         # This would fail on a 'normal' Linux install, so use /usr instead
         config_path = "/usr/local/share"
@@ -158,11 +160,15 @@ def main():
 
     if args.run:
         ## Check that static content files are available
+        static_content_error = False
         for content in def_latex_static:
             static_file = os.path.join(static_path, content)
             path_valid = False
             if not os.path.isfile(static_file):
+                static_content_error = True
                 logging.error("Static content '%s' was not found in '%s', this might cause Pandoc to fail", content, static_path)
+        if static_content_error and running_as_snap:
+            logging.error("Note that md2md2pdf_webserver is running as a Snap package - it might be confined and unable to access absoulte paths")
 
         ## Start the CherryPy server
         def_listen = args.listen
@@ -191,6 +197,8 @@ def main():
         logging.critical("Did not receive a command line flag")
         sys.exit()
 
+# END main()
+
 
 class DeleteTimerThread(threading.Thread):
     def __init__(self, folder):
@@ -200,9 +208,9 @@ class DeleteTimerThread(threading.Thread):
         self.folder = folder
 
     def run(self):
-        # Delete the folder after a 5 minute wait, to save disk space
-        logging.debug("Will remove '%s' in 5 minutes", self.folder)
-        time.sleep(300)
+        # Delete the folder after a 2 minute wait, to save disk space
+        logging.debug("Will remove '%s' in 2 minutes", self.folder)
+        time.sleep(120)
         logging.info("Removing folder '%s'", self.folder)
         try:
             shutil.rmtree(self.folder)
@@ -242,8 +250,6 @@ class PdfWorkerThread(threading.Thread):
         thread = DeleteTimerThread(dirname)
         thread.start()
 
-    # END run()
-
 
 class App:
     @cherrypy.expose
@@ -264,11 +270,21 @@ class App:
         ## Check that the client has set the "x-method" header
         x_method = cherrypy.request.headers.get('x-method')
         good_req = False
-        if type(x_method == 'str'):
+        if isinstance(x_method, str):
             if x_method == "MD-to-PDF":
                 good_req = True
         if not good_req:
             raise cherrypy.HTTPError(405, "This server only supports Markdown to PDF rendering, please check your request")
+
+        ## Check if the client has set the 'template' header
+        try:
+            x_template = cherrypy.request.headers.get('x-latex-template')
+        except:
+            pass
+        if isinstance(x_template, str):
+            template = x_template
+        else:
+            template = def_template
 
         ## Accept the upload file and write it to disk with a temporary name
         with open(upload_file, 'wb') as out:
@@ -356,7 +372,7 @@ class App:
             md_basename = os.path.basename(md_path)
             logging.debug("Basename is '%s'", md_basename)
             # Spawn PdfWorkerThread with necessary options
-            thread = PdfWorkerThread(md=md_path, template=def_template)
+            thread = PdfWorkerThread(md=md_path, template=template)
             thread.start()
         else:
             report_string = "MD file not found in submitted archive"
