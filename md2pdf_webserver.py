@@ -38,7 +38,6 @@ yaml = YAML()
 
 ## TODO:
 #   - Spruce up index.html
-#   - Delete temp files after a certain time
 
 # Dependencies (Ubuntu 16.04 packages):
 #   - librsvg2-bin
@@ -60,6 +59,7 @@ def main():
     global config_dict
     config_dict = {}
     global static_path
+    global launch_path
 
 
     ## Define the mapping between command line options and config file syntax
@@ -84,6 +84,8 @@ def main():
     if os.geteuid() is not 0:
         logging.error("You don't seem to be running as root - try with sudo if this fails")
 
+    ## Store the original directory
+    launch_path = os.getcwd()
 
     ## Read the config file, or create it if it doesn't exist
     # Try and see if we are running as an Ubuntu Snap package
@@ -168,7 +170,7 @@ def main():
                 static_content_error = True
                 logging.error("Static content '%s' was not found in '%s', this might cause Pandoc to fail", content, static_path)
         if static_content_error and running_as_snap:
-            logging.error("Note that md2md2pdf_webserver is running as a Snap package - it might be confined and unable to access absoulte paths")
+            logging.error("Note that md2md2pdf_webserver is running as a Snap package - it might be confined and unable to access absolute paths")
 
         ## Start the CherryPy server
         def_listen = args.listen
@@ -246,7 +248,7 @@ class PdfWorkerThread(threading.Thread):
             p = subprocess.Popen(arg, shell=True, stdout=log_file, stderr=log_file)
             p.wait()
 
-        # Spawn a new thread, which will delete the folder after 5 minutes
+        # Spawn a new thread, which will delete the folder after 2 minutes
         thread = DeleteTimerThread(dirname)
         thread.start()
 
@@ -254,14 +256,21 @@ class PdfWorkerThread(threading.Thread):
 class App:
     @cherrypy.expose
     def index(self):
+        # cd back to the launch path, in case cwd has been set elsewhere
+        os.chdir(launch_path)
         return open('index.html')
 
     @cherrypy.expose
     def style(self):
+        # cd back to the launch path, in case cwd has been set elsewhere
+        os.chdir(launch_path)
         return open('style.css')
 
     @cherrypy.expose
     def upload(self, ufile):
+        # cd back to the launch path, in case cwd has been set elsewhere
+        os.chdir(launch_path)
+
         upload_path = os.path.normpath(def_tempdir)
         upload_rand_name = ''.join(random.sample(string.hexdigits, 16))
         upload_file = os.path.join(upload_path, upload_rand_name)
@@ -395,6 +404,9 @@ hash: {}
     ## Provide a handler for fetching a compiled PDF
     @cherrypy.expose
     def fetch(self, hashsum=""):
+        # cd back to the launch path, in case cwd has been set elsewhere
+        os.chdir(launch_path)
+
         req_path = os.path.join(def_tempdir, hashsum)
 
         # By default, assume the PDF was not found
