@@ -233,7 +233,7 @@ class PdfWorkerThread(threading.Thread):
         dirname = os.path.dirname(self.md_file)
         arg = "pandoc --filter pandoc-crossref --pdf-engine=xelatex --template="
         arg += self.latex_template
-        arg += " -M figPrefix=Figure -M tblPrefix3=Table -M secPrefix=Section -M autoSectionLabels=true --highlight-style=tango '"
+        arg += " -M figPrefix=Figure -M tblPrefix=Table -M secPrefix=Section -M autoSectionLabels=true --highlight-style=tango '"
         arg += basename
         arg += "' -o '"
         arg += basename.replace("md", "pdf") + "'"
