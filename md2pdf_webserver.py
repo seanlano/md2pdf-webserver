@@ -116,6 +116,7 @@ def main():
             if not os.path.isfile(static_path):
                 copy_from = os.path.join(install_path, static)
                 logging.info("Did not find example static file %s, will copy it from %s", static_path, copy_from)
+                os.makedirs(os.path.dirname(static_path), exist_ok=True)
                 shutil.copy(copy_from, static_path)
 
     ## Define the relative path for static content
