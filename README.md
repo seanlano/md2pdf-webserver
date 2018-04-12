@@ -18,7 +18,7 @@ There are several motivations for this:
 - It's distracting having to worry about formatting while writing - Markdown takes away all but the most basic formatting options to focus you on writing
 
 
-With with an appropriate template, LaTeX PDF output is undeniably the prettiest-
+With an appropriate template, LaTeX PDF output is undeniably the prettiest-
 looking way to create documents. But, learning LaTeX is hard. Markdown
 is much easier to use, and when used with Pandoc can still produce superb PDF
 documents. md2pdf makes it simple to manage having the right LaTeX templates and
