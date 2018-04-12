@@ -111,6 +111,7 @@ def main():
         install_path = os.path.join(install_path, "example-static")
         for static in def_latex_static:
             static_path = os.environ["SNAP_COMMON"]
+            static_path = os.path.join(static_path, "static")
             static_path = os.path.join(static_path, static)
             if not os.path.isfile(static_path):
                 copy_from = os.path.join(install_path, static)
