@@ -104,6 +104,18 @@ def main():
         config_path = "/usr/local/share"
         config_path = os.path.join(config_path, config_name)
 
+    # If running as a Snap, check the static content has been copied in place
+    if running_as_snap:
+        install_path = os.environ["SNAP"]
+        install_path = os.path.join(install_path, "snap")
+        install_path = os.path.join(install_path, "example-static")
+        for static in def_latex_static:
+            static_path = os.environ["SNAP_COMMON"]
+            static_path = os.path.join(static_path, static_file)
+            if not os.path.isfile(static_path):
+                copy_from = os.path.join(install_path, static)
+                logging.info("Did not find example static file %s, will copy it from %s", static_path, copy_from)
+                shutil.copy(copy_from, static_path)
 
     ## Define the relative path for static content
     try:
