@@ -19,6 +19,10 @@ You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 '''
 
+global __version__
+__version__ = "0.0.1"
+
+
 import argparse
 import os
 import shutil

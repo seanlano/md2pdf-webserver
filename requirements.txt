@@ -1,0 +1,3 @@
+ruamel.yaml>=0.15.35
+requests>=2.9.1
+cherrypy>=14.0.1
