@@ -232,7 +232,7 @@ def main():
         os.chmod("tmp", stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH)
 
         # Copy binaries from /usr/bin
-        usr_bin_dir_copies = {"perl", "wget", "uniq", "sort", "tty", "env", "gpg2", "objdump", "locale", "clear", "tr", "basename", "dirname", "fc-cache", "fc-cat", "fc-list", "fc-match", "fc-pattern", "fc-query", "fc-scan", "fc-validate"}
+        usr_bin_dir_copies = {"wget", "uniq", "sort", "tty", "env", "gpg2", "objdump", "locale", "clear", "tr", "basename", "dirname", "fc-cache", "fc-cat", "fc-list", "fc-match", "fc-pattern", "fc-query", "fc-scan", "fc-validate", "perl"}
         if running_as_snap:
             usr_bin_dir = os.environ["SNAP"]
             usr_bin_dir = os.path.join(usr_bin_dir, "usr/bin")
@@ -243,7 +243,7 @@ def main():
             shutil.copy2(os.path.join(usr_bin_dir, copy), dest)
 
         # Copy binaries from /bin
-        bin_dir_copies = {"cp", "tar", "bunzip2", "bzcat", "bzip2", "cat", "chgrp", "chmod", "chown", "chvt", "cpio", "dash", "date", "dd", "df", "dir", "dumpkeys", "echo", "egrep", "false", "fgrep", "findmnt", "fuser", "grep", "gunzip", "gzip", "hostname", "kill", "less", "lessecho", "lessfile", "lesskey", "lesspipe", "ln", "ls", "mkdir", "mknod", "mktemp", "more", "mv", "open", "openvt", "pidof", "ping", "ps", "rm", "rmdir", "sed", "setfont", "sh", "sleep", "stty", "sync", "tailf", "tempfile", "touch", "true", "uname", "vdir", "which"}
+        bin_dir_copies = {"cp", "tar", "bunzip2", "bzcat", "bzip2", "cat", "chgrp", "chmod", "chown", "dash", "date", "dd", "df", "dir", "echo", "egrep", "false", "fgrep", "grep", "gunzip", "gzip", "hostname", "kill", "ln", "ls", "mkdir", "mknod", "mktemp", "mv", "rm", "rmdir", "sed", "sh", "sleep", "stty", "sync", "touch", "true", "uname", "vdir"}
         if running_as_snap:
             bin_dir = os.environ["SNAP"]
             bin_dir = os.path.join(bin_dir, "bin")
