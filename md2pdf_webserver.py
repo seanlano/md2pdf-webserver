@@ -25,6 +25,7 @@ __version__ = "0.0.1"
 
 import argparse
 import os
+import stat
 import shutil
 import sys
 import cherrypy
@@ -64,6 +65,8 @@ def main():
     config_dict = {}
     global static_path
     global launch_path
+    global chroot_path
+    global running_as_snap
 
 
     ## Define the mapping between command line options and config file syntax
@@ -97,11 +100,13 @@ def main():
     running_as_snap = False
     try:
         config_path = os.environ["SNAP_COMMON"]
+        chroot_path = os.path.join(config_path, "texlive-chroot")
         config_path = os.path.join(config_path, config_name)
         running_as_snap = True
     except (KeyError):
         # This would fail on a 'normal' Linux install, so use /usr instead
         config_path = "/usr/local/share"
+        chroot_path = os.path.join(config_path, "texlive-chroot")
         config_path = os.path.join(config_path, config_name)
 
     # If running as a Snap, check the static content has been copied in place
@@ -171,6 +176,7 @@ def main():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--run', action="store_true", help="Start the web service (will continue running in the foreground). Can be combined with other options, or will use stored default values")
     group.add_argument('--check', action="store_true", help="Prints out the location of the config file, and parses and validates it if it exists")
+    group.add_argument('--install', action="store_true", help="Performs the initial installation of TeX Live, using the latest CTAN installer")
     parser.add_argument('-p', '--port', metavar="PORT", type=int, help="Port to listen on (overrides value set in config file)", default=def_port)
     parser.add_argument('-l', '--listen', metavar="ADDRESS", help="Local IP address to listen on (overrides value set in config file)", default=def_listen)
     parser.add_argument('-t', '--tempdir', metavar="DIRECTORY", help="Temporary directory to use for storing received and rendered files (overrides value set in config file)", default=def_tempdir)
@@ -212,6 +218,42 @@ def main():
         yaml.dump(conf, sys.stdout)
         logging.info("Static files can either be absolute paths, or relative to '%s'", static_path)
         sys.exit()
+    elif args.install:
+        ## Install TeX Live into a chroot
+        logging.info("Will install TeX Live into '%s', using latest installer from CTAN", chroot_path)
+
+        # TODO: Prompt and remove existing installation
+
+        os.makedirs(chroot_path, exist_ok=True)
+        os.chdir(chroot_path)
+        make_dirs = {"bin", "usr", "dev", "etc", "lib", "tmp", "usr/bin", "usr/sbin", "usr/share", "usr/lib", "usr/local", "usr/local/bin"}
+        for make_dir in make_dirs:
+            os.makedirs(make_dir, exist_ok=True)
+        os.chmod("tmp", stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH)
+
+        # Copy binaries from /usr/bin
+        usr_bin_dir_copies = {"perl", "wget", "uniq", "sort", "tty", "env", "gpg2", "objdump", "locale", "clear", "tr", "basename", "dirname", "fc-cache", "fc-cat", "fc-list", "fc-match", "fc-pattern", "fc-query", "fc-scan", "fc-validate"}
+        if running_as_snap:
+            usr_bin_dir = os.environ["SNAP"]
+            usr_bin_dir = os.path.join(usr_bin_dir, "usr/bin")
+        else:
+            usr_bin_dir = "/usr/bin"
+        dest = os.path.join(chroot_path, "usr/bin")
+        for copy in usr_bin_dir_copies:
+            shutil.copy2(os.path.join(usr_bin_dir, copy), dest)
+
+        # Copy binaries from /bin
+        bin_dir_copies = {"cp", "tar", "bunzip2", "bzcat", "bzip2", "cat", "chgrp", "chmod", "chown", "chvt", "cpio", "dash", "date", "dd", "df", "dir", "dumpkeys", "echo", "egrep", "false", "fgrep", "findmnt", "fuser", "grep", "gunzip", "gzip", "hostname", "kill", "less", "lessecho", "lessfile", "lesskey", "lesspipe", "ln", "ls", "mkdir", "mknod", "mktemp", "more", "mv", "open", "openvt", "pidof", "ping", "ps", "rm", "rmdir", "sed", "setfont", "sh", "sleep", "stty", "sync", "tailf", "tempfile", "touch", "true", "uname", "vdir", "which"}
+        if running_as_snap:
+            bin_dir = os.environ["SNAP"]
+            bin_dir = os.path.join(bin_dir, "bin")
+        else:
+            bin_dir = "/bin"
+        dest = os.path.join(chroot_path, "bin")
+        for copy in bin_dir_copies:
+            shutil.copy2(os.path.join(bin_dir, copy), dest)
+
+
     else:
         # Should not be able to get here
         logging.critical("Did not receive a command line flag")
