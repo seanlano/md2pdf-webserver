@@ -224,6 +224,7 @@ def main():
 
         # TODO: Prompt and remove existing installation
 
+        # Make skeleton directories
         os.makedirs(chroot_path, exist_ok=True)
         os.chdir(chroot_path)
         make_dirs = {"bin", "usr", "dev", "etc", "lib", "tmp", "usr/bin", "usr/sbin", "usr/share", "usr/lib", "usr/local", "usr/local/bin"}
@@ -253,6 +254,27 @@ def main():
         for copy in bin_dir_copies:
             shutil.copy2(os.path.join(bin_dir, copy), dest)
 
+        # Copy /usr/share folders
+        usr_share_dir_copies = {"fonts", "i18n", "locale", "locales", "perl"}
+        if running_as_snap:
+            usr_share_dir = os.environ["SNAP"]
+            usr_share_dir = os.path.join(usr_share_dir, "usr/share")
+        else:
+            usr_share_dir = "/usr/share"
+        dest = os.path.join(chroot_path, "usr/share")
+        for copy in usr_share_dir_copies:
+            shutil.copytree(os.path.join(usr_share_dir, copy), os.path.join(dest, copy), symlinks=True)
+
+        # Copy /usr/lib folders
+        usr_lib_dir_copies = {"x86_64-linux-gnu", "locale"}
+        if running_as_snap:
+            usr_lib_dir = os.environ["SNAP"]
+            usr_lib_dir = os.path.join(usr_lib_dir, "usr/lib")
+        else:
+            usr_lib_dir = "/usr/lib"
+        dest = os.path.join(chroot_path, "usr/lib")
+        for copy in usr_lib_dir_copies:
+            shutil.copytree(os.path.join(usr_lib_dir, copy), os.path.join(dest, copy), symlinks=True)
 
     else:
         # Should not be able to get here
