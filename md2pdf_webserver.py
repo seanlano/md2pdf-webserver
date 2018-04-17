@@ -222,59 +222,27 @@ def main():
         ## Install TeX Live into a chroot
         logging.info("Will install TeX Live into '%s', using latest installer from CTAN", chroot_path)
 
-        # TODO: Prompt and remove existing installation
+        try:
+            os.makedirs(chroot_path, exist_ok=False)
+        except FileExistsError:
+            logging.critical("Path '%s' already exists - installer cannot continue")
+            sys.exit()
 
-        # Make skeleton directories
-        os.makedirs(chroot_path, exist_ok=True)
+        if running_as_snap:
+            snap_base = os.environ["SNAP"]
+            script_path = os.path.join(snap_base, "snap")
+            script_path = os.path.join(script_path, "setup-chroot.sh")
+            arg = "./setup-chroot.sh " + snap_base
+        else:
+            #script_path = "/usr/local/share/setup-chroot.sh"
+            script_path = "setup-chroot.sh"
+            arg = "./setup-chroot.sh"
+
+        shutil.copy2(script_path, chroot_path)
         os.chdir(chroot_path)
-        make_dirs = {"bin", "usr", "dev", "etc", "lib", "tmp", "usr/bin", "usr/sbin", "usr/share", "usr/lib", "usr/local", "usr/local/bin"}
-        for make_dir in make_dirs:
-            os.makedirs(make_dir, exist_ok=True)
-        os.chmod("tmp", stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH)
 
-        # Copy binaries from /usr/bin
-        usr_bin_dir_copies = {"wget", "uniq", "sort", "tty", "env", "gpg2", "objdump", "locale", "clear", "tr", "basename", "dirname", "fc-cache", "fc-cat", "fc-list", "fc-match", "fc-pattern", "fc-query", "fc-scan", "fc-validate", "perl"}
-        if running_as_snap:
-            usr_bin_dir = os.environ["SNAP"]
-            usr_bin_dir = os.path.join(usr_bin_dir, "usr/bin")
-        else:
-            usr_bin_dir = "/usr/bin"
-        dest = os.path.join(chroot_path, "usr/bin")
-        for copy in usr_bin_dir_copies:
-            shutil.copy2(os.path.join(usr_bin_dir, copy), dest)
-
-        # Copy binaries from /bin
-        bin_dir_copies = {"cp", "tar", "bunzip2", "bzcat", "bzip2", "cat", "chgrp", "chmod", "chown", "dash", "date", "dd", "df", "dir", "echo", "egrep", "false", "fgrep", "grep", "gunzip", "gzip", "hostname", "kill", "ln", "ls", "mkdir", "mknod", "mktemp", "mv", "rm", "rmdir", "sed", "sh", "sleep", "stty", "sync", "touch", "true", "uname", "vdir"}
-        if running_as_snap:
-            bin_dir = os.environ["SNAP"]
-            bin_dir = os.path.join(bin_dir, "bin")
-        else:
-            bin_dir = "/bin"
-        dest = os.path.join(chroot_path, "bin")
-        for copy in bin_dir_copies:
-            shutil.copy2(os.path.join(bin_dir, copy), dest)
-
-        # Copy /usr/share folders
-        usr_share_dir_copies = {"fonts", "i18n", "locale", "locales", "perl"}
-        if running_as_snap:
-            usr_share_dir = os.environ["SNAP"]
-            usr_share_dir = os.path.join(usr_share_dir, "usr/share")
-        else:
-            usr_share_dir = "/usr/share"
-        dest = os.path.join(chroot_path, "usr/share")
-        for copy in usr_share_dir_copies:
-            shutil.copytree(os.path.join(usr_share_dir, copy), os.path.join(dest, copy), symlinks=True)
-
-        # Copy /usr/lib folders
-        usr_lib_dir_copies = {"x86_64-linux-gnu", "locale"}
-        if running_as_snap:
-            usr_lib_dir = os.environ["SNAP"]
-            usr_lib_dir = os.path.join(usr_lib_dir, "usr/lib")
-        else:
-            usr_lib_dir = "/usr/lib"
-        dest = os.path.join(chroot_path, "usr/lib")
-        for copy in usr_lib_dir_copies:
-            shutil.copytree(os.path.join(usr_lib_dir, copy), os.path.join(dest, copy), symlinks=True)
+        p = subprocess.Popen(arg, shell=True)
+        p.wait()
 
     else:
         # Should not be able to get here
