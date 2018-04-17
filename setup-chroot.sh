@@ -22,13 +22,22 @@ chmod 777 .
 
 echo "Copying binaries and libraries"
 
-bin_copies=("cp" "tar" "bunzip2" "bzcat" "bzip2" "cat" "chgrp" "chmod" "chown" "dash" "date" "dd" "df" "dir" "echo" "egrep" "false" "fgrep" "grep" "gunzip" "gzip" "hostname" "kill" "ln" "ls" "mkdir" "mknod" "mktemp" "mv" "rm" "rmdir" "sed" "sh" "sleep" "stty" "sync" "touch" "true" "uname" "vdir")
+# Always copy from base system (i.e. from Core Snap if running as Snap)
+bin_copies=("cp" "tar" "bunzip2" "bzcat" "bzip2" "cat" "chmod" "chown" "dash" "date" "dd" "dir" "echo" "egrep" "false" "fgrep" "grep" "gzip" "hostname" "kill" "ln" "ls" "mkdir" "mknod" "mktemp" "mv" "rm" "rmdir" "sed" "sh" "sleep" "stty" "sync" "touch" "true" "uname" "vdir")
 for binary in "${bin_copies[@]}"
 do
-    cp -a "${1}/bin/${binary}" bin/
+    cp -a "/bin/${binary}" bin/
 done
 
-usr_bin_copies=("wget" "uniq" "sort" "tty" "env" "gpg2" "objdump" "locale" "clear" "tr" "basename" "dirname" "fc-cache" "fc-cat" "fc-list" "fc-match" "fc-pattern" "fc-query" "fc-scan" "fc-validate" "perl")
+# Copy from base system (i.e. from Core Snap if running as Snap)
+usr_bin_copies=("uniq" "sort" "tty" "env" "locale" "clear" "tr" "basename" "dirname" "perl")
+for binary in "${usr_bin_copies[@]}"
+do
+    cp -a "/usr/bin/${binary}" usr/bin/
+done
+
+# Copy from Snap (or from base if not running as Snap)
+usr_bin_copies=("wget" "gpg2" "objdump" "fc-cache" "fc-cat" "fc-list" "fc-match" "fc-pattern" "fc-query" "fc-scan" "fc-validate")
 for binary in "${usr_bin_copies[@]}"
 do
     cp -a "${1}/usr/bin/${binary}" usr/bin/
@@ -40,14 +49,16 @@ do
     cp -ar "${1}/usr/share/${folder}" usr/share/
 done
 
+# Always copy from base system (i.e. from Core Snap if running as Snap)
 usr_lib_dirs=("x86_64-linux-gnu" "locale")
 for folder in "${usr_lib_dirs[@]}"
 do
-    cp -ar "${1}/usr/lib/${folder}" usr/lib/
+    cp -ar "/usr/lib/${folder}" usr/lib/
 done
 
-cp -ar "${1}/lib/x86_64-linux-gnu" lib/
-cp -ar "${1}/lib64" .
+# Always copy from base system (i.e. from Core Snap if running as Snap)
+cp -ar "/lib/x86_64-linux-gnu" lib/
+# cp -ar "${1}/lib64" .
 
 
 echo "Setting up fonts"

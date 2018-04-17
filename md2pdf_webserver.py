@@ -234,7 +234,6 @@ def main():
             script_path = os.path.join(script_path, "setup-chroot.sh")
             arg = "./setup-chroot.sh " + snap_base
         else:
-            #script_path = "/usr/local/share/setup-chroot.sh"
             script_path = "setup-chroot.sh"
             arg = "./setup-chroot.sh"
 
