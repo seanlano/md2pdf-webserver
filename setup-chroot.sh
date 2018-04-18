@@ -43,6 +43,7 @@ do
     cp -a "${1}/usr/bin/${binary}" usr/bin/
 done
 
+# Copy from Snap (or from base if not running as Snap)
 usr_share_dirs=("fonts" "i18n" "locale" "locales" "perl")
 for folder in "${usr_share_dirs[@]}"
 do
@@ -58,7 +59,8 @@ done
 
 # Always copy from base system (i.e. from Core Snap if running as Snap)
 cp -ar "/lib/x86_64-linux-gnu" lib/
-# cp -ar "${1}/lib64" .
+# Copy from Snap (or from base if not running as Snap)
+cp -ar "${1}/lib64" .
 
 
 echo "Setting up fonts"
