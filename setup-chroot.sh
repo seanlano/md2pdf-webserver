@@ -96,7 +96,20 @@ echo "Setting up config files"
 echo "nameserver 8.8.8.8" >> etc/resolv.conf
 echo \#\!/bin/sh >> usr/local/bin/wrapper
 echo "export PATH=/usr/local/texlive/bin/x86_64-linux:\$PATH" >> usr/local/bin/wrapper
+echo \$1 >> usr/local/bin/wrapper
 chmod 555 usr/local/bin/wrapper
+
+
+echo "Copying TeX Live installer"
+
+if [ $IS_SNAP == 1 ]
+then
+    cp ${SNAP}/snap/install-tl-unx.tar.gz .
+else
+    wget https://mirrors.sorengard.com/ctan/systems/texlive/tlnet/install-tl-unx.tar.gz
+fi
+mkdir -p install-tl-unx
+tar xvf install-tl-unx.tar.gz --strip-components 1 --directory install-tl-unx
 
 
 # echo "Cleaning up"
@@ -114,8 +127,6 @@ dd if=/dev/random of=dev/random bs=1 count=256
 echo "DONE chroot setup"
 
 
-# sudo chroot ./ wrapper 'wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz'
-# sudo chroot ./ wrapper 'tar xvf install-tl-unx.tar.gz'
 # sudo chroot ./ wrapper 'perl install-tl-20180303/install-tl'
 # sudo chroot ./ wrapper 'tlmgr install datetime fmtcount enumitem soul'
 # sudo chroot ./ wrapper 'run-xelatex /tmp/testfile/test.latex'
