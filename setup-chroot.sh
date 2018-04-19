@@ -68,13 +68,16 @@ done
 usr_lib_dirs=("x86_64-linux-gnu" "locale")
 for folder in "${usr_lib_dirs[@]}"
 do
-    cp -ar "/usr/lib/${folder}" usr/lib/
+    cp -ar "${1}/usr/lib/${folder}" usr/lib/
 done
 
 # Always copy from base system (i.e. from Core Snap if running as Snap)
 cp -ar "/lib/x86_64-linux-gnu" lib/
 # Copy from Snap (or from base if not running as Snap)
+# cp -ar 
+# Copy from Snap (or from base if not running as Snap)
 cp -ar "${1}/lib64" .
+
 
 echo "Setting up ld.so"
 # TODO: Handle removing/updating this link
