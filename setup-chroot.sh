@@ -98,6 +98,8 @@ echo "export PATH=/usr/local/texlive/bin/x86_64-linux:\$PATH" >> usr/local/bin/w
 echo \$1 >> usr/local/bin/wrapper
 chmod 555 usr/local/bin/wrapper
 
+echo ${SNAP_REVISION} >> snap_revision
+
 
 echo "Copying TeX Live installer"
 
