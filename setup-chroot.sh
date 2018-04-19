@@ -103,13 +103,14 @@ echo ${SNAP_REVISION} >> snap_revision
 
 echo "Copying TeX Live installer"
 
+mkdir -p install-tl-unx
 if [ $IS_SNAP == 1 ]
 then
     cp ${SNAP}/snap/install-tl-unx.tar.gz .
+    cp ${SNAP}/snap/md2pdf-texlive.profile install-tl-unx/
 else
     wget https://mirrors.sorengard.com/ctan/systems/texlive/tlnet/install-tl-unx.tar.gz
 fi
-mkdir -p install-tl-unx
 tar xvf install-tl-unx.tar.gz --strip-components 1 --directory install-tl-unx
 
 
