@@ -130,6 +130,12 @@ echo "(this will be faster if you use the keyboard and mouse!)"
 dd if=/dev/random of=dev/random bs=1 count=256
 
 
+echo "Running installer"
+
+LC_ALL=C chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'perl install-tl-unx/install-tl -profile install-tl-unx/texlive.profile'
+LC_ALL=C chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'tlmgr install datetime fmtcount enumitem soul'
+
+
 echo "Cleaning up"
 
 rm install-tl-unx.tar.gz
