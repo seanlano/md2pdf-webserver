@@ -1,7 +1,6 @@
 #!/bin/bash
 
 echo "Setting up chroot in "$(pwd)
-# echo "Command line ARG1: '${1}'"
 
 
 IS_SNAP=0
@@ -112,16 +111,26 @@ mkdir -p install-tl-unx
 tar xvf install-tl-unx.tar.gz --strip-components 1 --directory install-tl-unx
 
 
-# echo "Cleaning up"
-#
-# rm install-tl-unx.tar.gz
-# rm -rf install-tl-20180303
+if [ $IS_SNAP == 1 ]
+then
+    echo "Copying Pandoc"
+    # TODO: Handle removing/updating this
+    cp -a ${SNAP}/bin/pandoc bin/
+    cp -a ${SNAP}/bin/pandoc-citeproc bin/
+    cp -a ${SNAP}/bin/pandoc-crossref bin/
+fi
 
 
 echo "Setting up a small amount of entropy into /dev/random"
 echo "(this will be faster if you use the keyboard and mouse!)"
 
 dd if=/dev/random of=dev/random bs=1 count=256
+
+
+echo "Cleaning up"
+
+rm install-tl-unx.tar.gz
+# rm -rf install-tl-20180303
 
 
 echo "DONE chroot setup"
