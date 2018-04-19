@@ -22,6 +22,16 @@ chmod 777 .
 
 echo "Copying binaries and libraries"
 
+IS_SNAP=0
+if [ -z ${SNAP_NAME+x} ]
+then
+    echo "NOT installed as a Snap"
+    IS_SNAP=false
+else
+    echo "SNAP_NAME is '${SNAP_NAME}'"
+    IS_SNAP=1
+fi
+
 # Always copy from base system (i.e. from Core Snap if running as Snap)
 bin_copies=("cp" "tar" "bunzip2" "bzcat" "bzip2" "cat" "chmod" "chown" "dash" "date" "dd" "dir" "echo" "egrep" "false" "fgrep" "grep" "gzip" "hostname" "kill" "ln" "ls" "mkdir" "mknod" "mktemp" "mv" "rm" "rmdir" "sed" "sh" "sleep" "stty" "sync" "touch" "true" "uname" "vdir")
 for binary in "${bin_copies[@]}"
@@ -62,6 +72,11 @@ cp -ar "/lib/x86_64-linux-gnu" lib/
 # Copy from Snap (or from base if not running as Snap)
 cp -ar "${1}/lib64" .
 
+echo "Setting up ld.so"
+# TODO: Handle removing/updating this link
+mkdir -p snap/${SNAP_NAME}/${SNAP_REVISION}/lib/x86_64-linux-gnu
+ln -s ./${SNAP_REVISION} snap/${SNAP_NAME}/current
+cp -a lib64/ld-linux-x86-64.so.2 snap/${SNAP_NAME}/${SNAP_REVISION}/lib/x86_64-linux-gnu/ld-2.23.so
 
 echo "Setting up fonts"
 
