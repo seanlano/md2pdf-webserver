@@ -212,7 +212,7 @@ $if(title)$
 \usepackage{geometry}
 $endif$
 % Enable embedded EPS images
-\usepackage{epstopdf}
+% \usepackage{epstopdf} % Not needed with xelatex, only pdflatex
 
 % Set main document fonts
 \setmainfont[Numbers=Uppercase]{FreeSerif} % "Roman" serif font
