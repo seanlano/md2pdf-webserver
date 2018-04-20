@@ -133,7 +133,7 @@ dd if=/dev/random of=dev/random bs=1 count=256
 
 echo "Running installer"
 
-chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'perl install-tl-unx/install-tl -profile install-tl-unx/texlive.profile'
+chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'perl install-tl-unx/install-tl -profile install-tl-unx/md2pdf-texlive.profile'
 chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'tlmgr install datetime fmtcount enumitem soul'
 
 
