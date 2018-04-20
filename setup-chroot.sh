@@ -95,6 +95,7 @@ echo "Setting up config files"
 echo "nameserver 8.8.8.8" >> etc/resolv.conf
 echo \#\!/bin/sh >> usr/local/bin/wrapper
 echo "export PATH=/usr/local/texlive/bin/x86_64-linux:\$PATH" >> usr/local/bin/wrapper
+echo "export LC_ALL=C" >> usr/local/bin/wrapper
 echo \$1 >> usr/local/bin/wrapper
 chmod 555 usr/local/bin/wrapper
 
@@ -132,14 +133,14 @@ dd if=/dev/random of=dev/random bs=1 count=256
 
 echo "Running installer"
 
-LC_ALL=C chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'perl install-tl-unx/install-tl -profile install-tl-unx/texlive.profile'
-LC_ALL=C chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'tlmgr install datetime fmtcount enumitem soul'
+chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'perl install-tl-unx/install-tl -profile install-tl-unx/texlive.profile'
+chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'tlmgr install datetime fmtcount enumitem soul'
 
 
 echo "Cleaning up"
 
 rm install-tl-unx.tar.gz
-# rm -rf install-tl-20180303
+rm -rf install-tl-unx
 
 
 echo "DONE chroot setup"
