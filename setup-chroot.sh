@@ -21,12 +21,14 @@ mkdir dev
 mkdir etc
 mkdir lib
 mkdir tmp
+mkdir var
 mkdir usr/local
 mkdir usr/local/bin
 mkdir usr/bin
 mkdir usr/sbin
 mkdir usr/share
 mkdir usr/lib
+mkdir var/lib
 
 chmod 777 tmp
 chmod 777 .
@@ -56,7 +58,7 @@ do
 done
 
 # Copy from Snap (or from base if not running as Snap)
-usr_share_dirs=("fonts" "i18n" "locale" "locales" "perl")
+usr_share_dirs=("fonts" "i18n" "locale" "locales" "perl" "ghostscript")
 for folder in "${usr_share_dirs[@]}"
 do
     cp -ar "${1}/usr/share/${folder}" usr/share/
@@ -88,6 +90,9 @@ fi
 echo "Setting up fonts"
 
 cp -ar "${1}/etc/fonts" etc/
+cp -ar "${1}/etc/ghostscript" etc/
+cp -a "${1}/usr/sbin/update-gsfontmap" usr/bin/
+cp -ar "${1}/var/lib/ghostscript" var/lib/
 
 
 echo "Setting up config files"
@@ -133,6 +138,7 @@ dd if=/dev/random of=dev/random bs=1 count=256
 
 echo "Running installer"
 
+chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'update-gsfontmap'
 chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'perl install-tl-unx/install-tl -profile install-tl-unx/md2pdf-texlive.profile'
 chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'tlmgr install datetime fmtcount enumitem soul'
 
