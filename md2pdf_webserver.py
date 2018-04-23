@@ -293,8 +293,14 @@ class PdfWorkerThread(threading.Thread):
 
         # Open a log file for the subprocess call
         with open(basename.replace("md", "log"), 'wt', encoding="utf-8") as log_file:
+            custom_env = os.environ.copy()
+            
+            # Add TEX Live to path if running as a Snap
+            if running_as_snap:
+                custom_env["PATH"] = "/usr/local/texlive/bin/x86_64-linux:" + custom_env["PATH"]
+
             # Run the shell call, and wait for it to end
-            p = subprocess.Popen(arg, shell=True, stdout=log_file, stderr=log_file)
+            p = subprocess.Popen(arg, shell=True, stdout=log_file, stderr=log_file, env=custom_env)
             p.wait()
 
         # Spawn a new thread, which will delete the folder after 2 minutes
