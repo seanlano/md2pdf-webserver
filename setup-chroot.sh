@@ -135,8 +135,8 @@ echo "Setting up a small amount of entropy into /dev/random"
 echo "(this will be faster if you use the keyboard and mouse!)"
 
 # Hide the output from dd, it's not really helpful in this case
-dd if=/dev/random of=dev/random bs=1 count=256 1> /dev/null
-dd if=/dev/random of=dev/urandom bs=1 count=256 1> /dev/null
+dd if=/dev/random of=dev/random bs=1 count=128 1> /dev/null
+dd if=/dev/random of=dev/urandom bs=1 count=128 1> /dev/null
 
 
 echo "Running installer"
