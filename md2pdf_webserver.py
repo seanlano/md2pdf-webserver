@@ -280,26 +280,51 @@ class PdfWorkerThread(threading.Thread):
         self.latex_template = template
 
     def run(self):
+        # Get the full path of the input MD file
         dirname = os.path.abspath(os.path.dirname(self.md_file))
-        template_path = os.path.join("/", os.path.relpath(os.path.join(dirname, self.latex_template), chroot_path)).replace(" ","\\ ")
-        md_name = os.path.join("/", os.path.relpath(self.md_file, chroot_path)).replace(" ","\\ ")
+        # Make the template name safe if it contains spaces
+        template_path = self.latex_template.replace(" ","\\ ")
+        # Make the MD name safe if it contains spaces
+        md_name = os.path.basename(self.md_file).replace(" ","\\ ")
+        # Get the full path to the MD file, inside the chroot
+        md_name_full = os.path.join("/", os.path.relpath(self.md_file, chroot_path)).replace(" ","\\ ")
 
-        arg = "pandoc --filter pandoc-crossref --pdf-engine=xelatex --template="
-        arg += template_path
-        arg += " -M figPrefix=Figure -M tblPrefix=Table -M secPrefix=Section -M autoSectionLabels=true --highlight-style=tango "
-        arg += md_name
-        arg += " -o "
-        arg += md_name.replace("md", "pdf")
+        # Create a temporary shell script, to call inside the chroot
+        shell_name = os.path.join(dirname, "pandoc-wrapper.sh")
 
-        # Add "wrapper" call for chroot to argument
-        arg = "chroot " + chroot_path + " wrapper \"" + arg + "\""
+        # Get the path of the temporary directory inside the chroot
+        chroot_tmp = os.path.join("/", os.path.relpath(dirname, chroot_path))
 
-        logging.debug(arg)
+        with open(shell_name, 'wt', encoding="utf-8") as shell_file:
+            arg = "pandoc --filter pandoc-crossref --pdf-engine=xelatex --template="
+            arg += template_path
+            arg += " -M figPrefix=Figure -M tblPrefix=Table -M secPrefix=Section -M autoSectionLabels=true --highlight-style=tango "
+            arg += md_name
+            arg += " -o "
+            arg += md_name.replace("md", "pdf")
+
+            shell_file.write("#!/bin/sh\n\n")
+            shell_file.write("export LC_ALL=C\n")
+            shell_file.write("cd " + chroot_tmp + "\n")
+            shell_file.write("export PATH=/usr/local/texlive/bin/x86_64-linux:/usr/local/bin:/usr/sbin:/usr/bin:/bin\n\n")
+            shell_file.write(arg + "\n")
+
+        # Set script to be executable
+        os.chmod(shell_name, 0o744)
+
+        # Modify shell_name to now be the path inside the chroot
+        shell_name = os.path.join("/", os.path.relpath(shell_name, chroot_path))
+        logging.debug("Wrapper script path inside chroot is '%s'", shell_name)
+
+        # Create command to call script inside chroot
+        arg = "chroot " + chroot_path + " " + shell_name
+
+        logging.debug("Will execute command: " + arg)
 
         os.chdir(dirname)
 
         # Open a log file for the subprocess call
-        log_name = md_name.replace("md", "log")
+        log_name = md_name_full.replace("md", "log")
         log_name = os.path.join(chroot_path, os.path.relpath(log_name, "/"))
         logging.debug("Writing log file to '%s'", log_name)
         with open(log_name, 'wt', encoding="utf-8") as log_file:
