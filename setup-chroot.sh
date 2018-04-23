@@ -117,7 +117,8 @@ then
 else
     wget https://mirrors.sorengard.com/ctan/systems/texlive/tlnet/install-tl-unx.tar.gz
 fi
-tar xvf install-tl-unx.tar.gz --strip-components 1 --directory install-tl-unx
+# tar will complain about some permissions, we don't mind about that
+tar xvf install-tl-unx.tar.gz --strip-components 1 --directory install-tl-unx 1> /dev/null 2> /dev/null
 
 
 if [ $IS_SNAP == 1 ]
@@ -133,8 +134,9 @@ fi
 echo "Setting up a small amount of entropy into /dev/random"
 echo "(this will be faster if you use the keyboard and mouse!)"
 
-dd if=/dev/random of=dev/random bs=1 count=256
-dd if=/dev/random of=dev/urandom bs=1 count=256
+# Hide the output from dd, it's not really helpful in this case
+dd if=/dev/random of=dev/random bs=1 count=256 1> /dev/null
+dd if=/dev/random of=dev/urandom bs=1 count=256 1> /dev/null
 
 
 echo "Running installer"
@@ -152,8 +154,3 @@ rm -rf install-tl-unx
 
 echo
 echo "DONE chroot setup"
-
-
-# sudo chroot ./ wrapper 'perl install-tl-20180303/install-tl'
-# sudo chroot ./ wrapper 'tlmgr install datetime fmtcount enumitem soul'
-# sudo chroot ./ wrapper 'run-xelatex /tmp/testfile/test.latex'
