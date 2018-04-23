@@ -179,7 +179,7 @@ def main():
     group.add_argument('--install', action="store_true", help="Performs the initial installation of TeX Live, using the latest CTAN installer")
     parser.add_argument('-p', '--port', metavar="PORT", type=int, help="Port to listen on (overrides value set in config file)", default=def_port)
     parser.add_argument('-l', '--listen', metavar="ADDRESS", help="Local IP address to listen on (overrides value set in config file)", default=def_listen)
-    parser.add_argument('-t', '--tempdir', metavar="DIRECTORY", help="Temporary directory to use for storing received and rendered files (overrides value set in config file)", default=def_tempdir)
+    #parser.add_argument('-t', '--tempdir', metavar="DIRECTORY", help="Temporary directory to use for storing received and rendered files (overrides value set in config file)", default=def_tempdir)
 
     args = parser.parse_args()
 
@@ -209,7 +209,10 @@ def main():
                 'log.screen': False
             }
         }
-        def_tempdir = args.tempdir
+        def_tempdir = conf[config_dict["tempdir"]]
+        # Use the chroot as the base for the temporary directory
+        def_tempdir = os.path.join(chroot_path, def_tempdir)
+
         cherrypy.quickstart(App(), '/', cherry_config)
     elif args.check:
         ## Parse and validate config options
