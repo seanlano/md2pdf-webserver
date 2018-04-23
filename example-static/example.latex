@@ -118,8 +118,11 @@ $endif$
 
 \usepackage{longtable,booktabs}
 
+% Always have graphics in template
+\usepackage{graphicx}
+
 $if(graphics)$
-\usepackage{graphicx,grffile}
+\usepackage{grffile}
 \makeatletter
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
 \def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
@@ -212,7 +215,7 @@ $if(title)$
 \usepackage{geometry}
 $endif$
 % Enable embedded EPS images
-\usepackage{epstopdf}
+% \usepackage{epstopdf} % Not needed with xelatex, only pdflatex
 
 % Set main document fonts
 \setmainfont[Numbers=Uppercase]{FreeSerif} % "Roman" serif font
