@@ -325,6 +325,8 @@ class PdfWorkerThread(threading.Thread):
 
         # Open a log file for the subprocess call
         log_name = md_name_full.replace("md", "log")
+        # Don't need shell escaping in logfile name
+        log_name = log_name.replace("\\ ", " ")
         log_name = os.path.join(chroot_path, os.path.relpath(log_name, "/"))
         logging.debug("Writing log file to '%s'", log_name)
         with open(log_name, 'wt', encoding="utf-8") as log_file:
