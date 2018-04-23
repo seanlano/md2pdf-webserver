@@ -280,17 +280,16 @@ class PdfWorkerThread(threading.Thread):
         self.latex_template = template
 
     def run(self):
-        basename = os.path.abspath(os.path.basename(self.md_file))
         dirname = os.path.abspath(os.path.dirname(self.md_file))
-        template_path = os.path.join("/", os.path.relpath(os.path.join(dirname, self.latex_template), chroot_path))
-        md_name = os.path.join("/", os.path.relpath(self.md_file, chroot_path))
+        template_path = os.path.join("/", os.path.relpath(os.path.join(dirname, self.latex_template), chroot_path)).replace(" ","\\ ")
+        md_name = os.path.join("/", os.path.relpath(self.md_file, chroot_path)).replace(" ","\\ ")
 
         arg = "pandoc --filter pandoc-crossref --pdf-engine=xelatex --template="
         arg += template_path
-        arg += " -M figPrefix=Figure -M tblPrefix=Table -M secPrefix=Section -M autoSectionLabels=true --highlight-style=tango '"
+        arg += " -M figPrefix=Figure -M tblPrefix=Table -M secPrefix=Section -M autoSectionLabels=true --highlight-style=tango "
         arg += md_name
-        arg += "' -o '"
-        arg += md_name.replace("md", "pdf") + "'"
+        arg += " -o "
+        arg += md_name.replace("md", "pdf")
 
         # Add "wrapper" call for chroot to argument
         arg = "chroot " + chroot_path + " wrapper \"" + arg + "\""
