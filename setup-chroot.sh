@@ -31,7 +31,7 @@ mkdir usr/lib
 mkdir var/lib
 
 chmod 777 tmp
-chmod 777 .
+chmod 755 .
 
 
 echo "Copying binaries and libraries"
@@ -134,6 +134,7 @@ echo "Setting up a small amount of entropy into /dev/random"
 echo "(this will be faster if you use the keyboard and mouse!)"
 
 dd if=/dev/random of=dev/random bs=1 count=256
+dd if=/dev/random of=dev/urandom bs=1 count=256
 
 
 echo "Running installer"
