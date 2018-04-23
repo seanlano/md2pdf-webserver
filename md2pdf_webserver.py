@@ -289,7 +289,7 @@ class PdfWorkerThread(threading.Thread):
         arg += basename.replace("md", "pdf") + "'"
 
         # Add "wrapper" call for chroot to argument
-        arg = "wrapper \"" + arg + "\""
+        arg = "chroot " + chroot_path + " /usr/local/bin/wrapper \"" + arg + "\""
 
         logging.debug(arg)
 
