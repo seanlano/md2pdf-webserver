@@ -51,7 +51,7 @@ do
 done
 
 # Copy from Snap (or from base if not running as Snap)
-usr_bin_copies=("wget" "gpg2" "objdump" "fc-cache" "fc-cat" "fc-list" "fc-match" "fc-pattern" "fc-query" "fc-scan" "fc-validate" "dvipdf" "eps2eps" "font2c" "ghostscript" "gs" "gsbj" "gsdj" "gsdj500" "gslj" "gslp" "gsnd" "pdf2dsc" "pdf2ps" "pf2afm" "pfbtopfa" "pphs" "printafm" "ps2ascii" "ps2epsi" "ps2pdf" "ps2pdf12" "ps2pdf13" "ps2pdf14" "ps2pdfwr" "ps2ps" "ps2ps2" "ps2txt" "wftopfa")
+usr_bin_copies=("wget" "gpg2" "objdump" "fc-cache" "fc-cat" "fc-list" "fc-match" "fc-pattern" "fc-query" "fc-scan" "fc-validate" "dvipdf" "eps2eps" "font2c" "ghostscript" "gs" "gsbj" "gsdj" "gsdj500" "gslj" "gslp" "gsnd" "pdf2dsc" "pdf2ps" "pf2afm" "pfbtopfa" "pphs" "printafm" "ps2ascii" "ps2epsi" "ps2pdf" "ps2pdf12" "ps2pdf13" "ps2pdf14" "ps2pdfwr" "ps2ps" "ps2ps2" "ps2txt" "rsvg" "wftopfa")
 for binary in "${usr_bin_copies[@]}"
 do
     cp -a "${1}/usr/bin/${binary}" usr/bin/
