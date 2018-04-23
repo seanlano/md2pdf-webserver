@@ -225,7 +225,8 @@ def main():
         try:
             os.makedirs(chroot_path, exist_ok=False)
         except FileExistsError:
-            logging.critical("Path '%s' already exists - installer cannot continue")
+            logging.critical("Path '%s' already exists - installer cannot continue.", chroot_path)
+            logging.critical("If you want to re-install, first run `sudo rm -rf %s`", chroot_path)
             sys.exit()
 
         if running_as_snap:
@@ -287,20 +288,17 @@ class PdfWorkerThread(threading.Thread):
         arg += "' -o '"
         arg += basename.replace("md", "pdf") + "'"
 
+        # Add "wrapper" call for chroot to argument
+        arg = "wrapper \"" + arg + "\""
+
         logging.debug(arg)
 
         os.chdir(dirname)
 
         # Open a log file for the subprocess call
         with open(basename.replace("md", "log"), 'wt', encoding="utf-8") as log_file:
-            custom_env = os.environ.copy()
-            
-            # Add TEX Live to path if running as a Snap
-            if running_as_snap:
-                custom_env["PATH"] = "/usr/local/texlive/bin/x86_64-linux:" + custom_env["PATH"]
-
             # Run the shell call, and wait for it to end
-            p = subprocess.Popen(arg, shell=True, stdout=log_file, stderr=log_file, env=custom_env)
+            p = subprocess.Popen(arg, shell=True, stdout=log_file, stderr=log_file)
             p.wait()
 
         # Spawn a new thread, which will delete the folder after 2 minutes
