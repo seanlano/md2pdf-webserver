@@ -78,7 +78,6 @@ def main():
     ## Hard-coded defaults, used if no config file exists
     def_port = 9090
     def_listen = "127.0.0.1"
-    def_tempdir = "/tmp"
     def_latex_static = (
             "example.latex",
             "gear.eps",
@@ -108,6 +107,12 @@ def main():
         config_path = "/usr/local/share"
         chroot_path = os.path.join(config_path, "texlive-chroot")
         config_path = os.path.join(config_path, config_name)
+
+    logging.debug("Setting chroot path to '%s'", chroot_path)
+
+    # Use the chroot as the base for the temporary directory
+    def_tempdir = os.path.join(chroot_path, "tmp")
+    logging.debug("Setting temp path to '%s'", def_tempdir)
 
     # If running as a Snap, check the static content has been copied in place
     if running_as_snap:
@@ -146,7 +151,6 @@ def main():
         conf = {}
         conf[config_dict["port"]] = def_port
         conf[config_dict["listen"]] = def_listen
-        conf[config_dict["tempdir"]] = def_tempdir
         conf["static_content"] = def_latex_static
         conf["default_template"] = def_template
 
@@ -160,7 +164,6 @@ def main():
     try:
         def_port = int(conf[config_dict["port"]])
         def_listen = conf[config_dict["listen"]]
-        def_tempdir = conf[config_dict["tempdir"]]
         def_latex_static = conf["static_content"]
         def_template = conf["default_template"]
     except KeyError as e:
@@ -179,7 +182,6 @@ def main():
     group.add_argument('--install', action="store_true", help="Performs the initial installation of TeX Live, using the latest CTAN installer")
     parser.add_argument('-p', '--port', metavar="PORT", type=int, help="Port to listen on (overrides value set in config file)", default=def_port)
     parser.add_argument('-l', '--listen', metavar="ADDRESS", help="Local IP address to listen on (overrides value set in config file)", default=def_listen)
-    #parser.add_argument('-t', '--tempdir', metavar="DIRECTORY", help="Temporary directory to use for storing received and rendered files (overrides value set in config file)", default=def_tempdir)
 
     args = parser.parse_args()
 
@@ -209,10 +211,6 @@ def main():
                 'log.screen': False
             }
         }
-        def_tempdir = conf[config_dict["tempdir"]]
-        # Use the chroot as the base for the temporary directory
-        def_tempdir = os.path.join(chroot_path, def_tempdir)
-
         cherrypy.quickstart(App(), '/', cherry_config)
     elif args.check:
         ## Parse and validate config options
@@ -282,24 +280,30 @@ class PdfWorkerThread(threading.Thread):
         self.latex_template = template
 
     def run(self):
-        basename = os.path.basename(self.md_file)
-        dirname = os.path.dirname(self.md_file)
+        basename = os.path.abspath(os.path.basename(self.md_file))
+        dirname = os.path.abspath(os.path.dirname(self.md_file))
+        template_path = os.path.join("/", os.path.relpath(os.path.join(dirname, self.latex_template), chroot_path))
+        md_name = os.path.join("/", os.path.relpath(self.md_file, chroot_path))
+
         arg = "pandoc --filter pandoc-crossref --pdf-engine=xelatex --template="
-        arg += self.latex_template
+        arg += template_path
         arg += " -M figPrefix=Figure -M tblPrefix=Table -M secPrefix=Section -M autoSectionLabels=true --highlight-style=tango '"
-        arg += basename
+        arg += md_name
         arg += "' -o '"
-        arg += basename.replace("md", "pdf") + "'"
+        arg += md_name.replace("md", "pdf") + "'"
 
         # Add "wrapper" call for chroot to argument
-        arg = "chroot " + chroot_path + " /usr/local/bin/wrapper \"" + arg + "\""
+        arg = "chroot " + chroot_path + " wrapper \"" + arg + "\""
 
         logging.debug(arg)
 
         os.chdir(dirname)
 
         # Open a log file for the subprocess call
-        with open(basename.replace("md", "log"), 'wt', encoding="utf-8") as log_file:
+        log_name = md_name.replace("md", "log")
+        log_name = os.path.join(chroot_path, os.path.relpath(log_name, "/"))
+        logging.debug("Writing log file to '%s'", log_name)
+        with open(log_name, 'wt', encoding="utf-8") as log_file:
             # Run the shell call, and wait for it to end
             p = subprocess.Popen(arg, shell=True, stdout=log_file, stderr=log_file)
             p.wait()
@@ -327,9 +331,11 @@ class App:
         # cd back to the launch path, in case cwd has been set elsewhere
         os.chdir(launch_path)
 
+        logging.debug("Using temporary directory '%s'", def_tempdir)
         upload_path = os.path.normpath(def_tempdir)
         upload_rand_name = ''.join(random.sample(string.hexdigits, 16))
         upload_file = os.path.join(upload_path, upload_rand_name)
+        logging.debug("Uploading to file '%s'", upload_file)
         size = 0
 
         ## Check that the client has set the "x-method" header
