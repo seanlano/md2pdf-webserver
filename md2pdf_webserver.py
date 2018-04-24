@@ -43,7 +43,7 @@ yaml = YAML()
 
 ## TODO:
 # - Spruce up index.html
-# - Properly handle shell special character escaping 
+# - Properly handle shell special character escaping
 # - Add command line flag to run tlmgr install / update (for extra TeX packages)
 # - Make debug level configurable on the command line
 # - ADD DOCUMENTATION!!!!
@@ -172,7 +172,7 @@ def main():
 
 
     ## Parse the command-line arguments
-    parser = argparse.ArgumentParser(description='md2pdf webserver - A web service for rendering Markdown files into a PDF via Pandoc and LaTeX')
+    parser = argparse.ArgumentParser(description='md2pdf webserver v' + __version__ + ' - A web service for rendering Markdown files into a PDF via Pandoc and LaTeX')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--run', action="store_true", help="Start the web service (will continue running in the foreground). Can be combined with other options, or will use stored default values")
     group.add_argument('--check', action="store_true", help="Prints out the location of the config file, and parses and validates it if it exists")
