@@ -44,11 +44,11 @@ used in title pages and headers/footers), and fonts.
 Options are available via the `-h` flag:
 
 ```
-usage: md2pdf_webserver.py [-h] (--run | --check) [-p PORT] [-l ADDRESS]
-                           [-t DIRECTORY]
+usage: md2pdf_webserver [-h] (--run | --check | --install) [-p PORT]
+                        [-l ADDRESS]
 
-md2pdf webserver - A web service for rendering Markdown files into a PDF via
-Pandoc and LaTeX
+md2pdf webserver v0.0.1 - A web service for rendering Markdown files into a
+PDF via Pandoc and LaTeX
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -57,13 +57,12 @@ optional arguments:
                         will use stored default values
   --check               Prints out the location of the config file, and parses
                         and validates it if it exists
+  --install             Performs the initial installation of TeX Live, using
+                        the latest CTAN installer
   -p PORT, --port PORT  Port to listen on (overrides value set in config file)
   -l ADDRESS, --listen ADDRESS
                         Local IP address to listen on (overrides value set in
                         config file)
-  -t DIRECTORY, --tempdir DIRECTORY
-                        Temporary directory to use for storing received and
-                        rendered files (overrides value set in config file)
 ```
 
 ## Configuration file
