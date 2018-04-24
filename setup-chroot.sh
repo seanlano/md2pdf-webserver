@@ -64,7 +64,7 @@ do
     cp -ar "${1}/usr/share/${folder}" usr/share/
 done
 
-# Always copy from base system (i.e. from Core Snap if running as Snap)
+# Copy from Snap (or from base if not running as Snap)
 usr_lib_dirs=("x86_64-linux-gnu" "locale")
 for folder in "${usr_lib_dirs[@]}"
 do
