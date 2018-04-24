@@ -42,14 +42,11 @@ from ruamel.yaml import YAML
 yaml = YAML()
 
 ## TODO:
-#   - Spruce up index.html
-
-# Dependencies (Ubuntu 16.04 packages):
-#   - librsvg2-bin
-#   - texlive-base
-#   - texlive-extra-utils
-#   - texlive-generic-extra
-# Tested and working with Pandoc 2.1.2 and Pandoc-crossref 0.3.0.1
+# - Spruce up index.html
+# - Properly handle shell special character escaping 
+# - Add command line flag to run tlmgr install / update (for extra TeX packages)
+# - Make debug level configurable on the command line
+# - ADD DOCUMENTATION!!!!
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG,
