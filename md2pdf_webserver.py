@@ -280,11 +280,11 @@ class PdfWorkerThread(threading.Thread):
         # Get the full path of the input MD file
         dirname = os.path.abspath(os.path.dirname(self.md_file))
         # Make the template name safe if it contains spaces
-        template_path = self.latex_template.replace(" ","\\ ")
+        template_path = self.latex_template#.replace(" ","\\ ")
         # Make the MD name safe if it contains spaces
-        md_name = os.path.basename(self.md_file).replace(" ","\\ ")
+        md_name = os.path.basename(self.md_file)#.replace(" ","\\ ")
         # Get the full path to the MD file, inside the chroot
-        md_name_full = os.path.join("/", os.path.relpath(self.md_file, chroot_path)).replace(" ","\\ ")
+        md_name_full = os.path.join("/", os.path.relpath(self.md_file, chroot_path))#.replace(" ","\\ ")
 
         # Create a temporary shell script, to call inside the chroot
         shell_name = os.path.join(dirname, "pandoc-wrapper.sh")
@@ -293,12 +293,13 @@ class PdfWorkerThread(threading.Thread):
         chroot_tmp = os.path.join("/", os.path.relpath(dirname, chroot_path))
 
         with open(shell_name, 'wt', encoding="utf-8") as shell_file:
-            arg = "pandoc --filter pandoc-crossref --pdf-engine=xelatex --template="
+            arg = "pandoc --filter pandoc-crossref --pdf-engine=xelatex --template=\""
             arg += template_path
-            arg += " -M figPrefix=Figure -M tblPrefix=Table -M secPrefix=Section -M autoSectionLabels=true --highlight-style=tango "
+            arg += "\" -M figPrefix=Figure -M tblPrefix=Table -M secPrefix=Section -M autoSectionLabels=true --highlight-style=tango \""
             arg += md_name
-            arg += " -o "
+            arg += "\" -o \""
             arg += md_name.replace("md", "pdf")
+            arg += "\""
 
             shell_file.write("#!/bin/sh\n\n")
             shell_file.write("export LC_ALL=C\n")
@@ -323,7 +324,7 @@ class PdfWorkerThread(threading.Thread):
         # Open a log file for the subprocess call
         log_name = md_name_full.replace("md", "log")
         # Don't need shell escaping in logfile name
-        log_name = log_name.replace("\\ ", " ")
+        # log_name = log_name.replace("\\ ", " ")
         log_name = os.path.join(chroot_path, os.path.relpath(log_name, "/"))
         logging.debug("Writing log file to '%s'", log_name)
         with open(log_name, 'wt', encoding="utf-8") as log_file:
