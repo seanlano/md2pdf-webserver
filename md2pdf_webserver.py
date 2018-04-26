@@ -61,7 +61,7 @@ def main():
     global config_dict
     config_dict = {}
     global static_path
-    global launch_path
+    global html_path
     global chroot_path
     global running_as_snap
 
@@ -88,7 +88,7 @@ def main():
         logging.error("You don't seem to be running as root - try with sudo if this fails")
 
     ## Store the original directory
-    launch_path = os.getcwd()
+    html_path = os.getcwd()
 
     ## Read the config file, or create it if it doesn't exist
     # Try and see if we are running as an Ubuntu Snap package
@@ -98,6 +98,9 @@ def main():
         config_path = os.environ["SNAP_COMMON"]
         chroot_path = os.path.join(config_path, "texlive-chroot")
         config_path = os.path.join(config_path, config_name)
+        html_path = os.environ["SNAP"]
+        html_path = os.path.join(install_path, "snap")
+        html_path = os.path.join(install_path, "html")
         running_as_snap = True
     except (KeyError):
         # This would fail on a 'normal' Linux install, so use /usr instead
@@ -280,11 +283,11 @@ class PdfWorkerThread(threading.Thread):
         # Get the full path of the input MD file
         dirname = os.path.abspath(os.path.dirname(self.md_file))
         # Make the template name safe if it contains spaces
-        template_path = self.latex_template#.replace(" ","\\ ")
+        template_path = self.latex_template
         # Make the MD name safe if it contains spaces
-        md_name = os.path.basename(self.md_file)#.replace(" ","\\ ")
+        md_name = os.path.basename(self.md_file)
         # Get the full path to the MD file, inside the chroot
-        md_name_full = os.path.join("/", os.path.relpath(self.md_file, chroot_path))#.replace(" ","\\ ")
+        md_name_full = os.path.join("/", os.path.relpath(self.md_file, chroot_path))
 
         # Create a temporary shell script, to call inside the chroot
         shell_name = os.path.join(dirname, "pandoc-wrapper.sh")
@@ -323,8 +326,6 @@ class PdfWorkerThread(threading.Thread):
 
         # Open a log file for the subprocess call
         log_name = md_name_full.replace("md", "log")
-        # Don't need shell escaping in logfile name
-        # log_name = log_name.replace("\\ ", " ")
         log_name = os.path.join(chroot_path, os.path.relpath(log_name, "/"))
         logging.debug("Writing log file to '%s'", log_name)
         with open(log_name, 'wt', encoding="utf-8") as log_file:
@@ -341,20 +342,17 @@ class App:
     @cherrypy.expose
     def index(self):
         # cd back to the launch path, in case cwd has been set elsewhere
-        os.chdir(launch_path)
+        os.chdir(html_path)
         return open('index.html')
 
     @cherrypy.expose
     def style(self):
         # cd back to the launch path, in case cwd has been set elsewhere
-        os.chdir(launch_path)
+        os.chdir(html_path)
         return open('style.css')
 
     @cherrypy.expose
     def upload(self, ufile):
-        # cd back to the launch path, in case cwd has been set elsewhere
-        os.chdir(launch_path)
-
         logging.debug("Using temporary directory '%s'", def_tempdir)
         upload_path = os.path.normpath(def_tempdir)
         upload_rand_name = ''.join(random.sample(string.hexdigits, 16))
@@ -490,9 +488,6 @@ hash: {}
     ## Provide a handler for fetching a compiled PDF
     @cherrypy.expose
     def fetch(self, hashsum=""):
-        # cd back to the launch path, in case cwd has been set elsewhere
-        os.chdir(launch_path)
-
         req_path = os.path.join(def_tempdir, hashsum)
 
         # By default, assume the PDF was not found
