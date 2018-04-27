@@ -81,8 +81,10 @@ Currently, it is only available for the `x86_64` architecture. `armhf` support i
 To install the Snap package, the command is simply: 
 
 ```
-sudo snap install --edge md2pdf-webserver
+sudo snap install --beta md2pdf-webserver
 ```
+
+The `--beta` flag will install a testing version of the application - it has not been release to stable yet. 
 
 Of course this will only work on systems that support Snappy, i.e. any recent Ubuntu version, as well as other Linuxes - [see here](https://docs.snapcraft.io/core/install) for more information. 
 
