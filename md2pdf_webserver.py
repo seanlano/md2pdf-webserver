@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 '''
 
 global __version__
-__version__ = "0.0.1"
+__version__ = "0.0.3"
 
 
 import argparse
@@ -99,8 +99,8 @@ def main():
         chroot_path = os.path.join(config_path, "texlive-chroot")
         config_path = os.path.join(config_path, config_name)
         html_path = os.environ["SNAP"]
-        html_path = os.path.join(install_path, "snap")
-        html_path = os.path.join(install_path, "html")
+        html_path = os.path.join(html_path, "snap")
+        html_path = os.path.join(html_path, "html")
         running_as_snap = True
     except (KeyError):
         # This would fail on a 'normal' Linux install, so use /usr instead
