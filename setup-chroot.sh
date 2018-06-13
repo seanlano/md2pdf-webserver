@@ -143,7 +143,7 @@ echo "Running installer"
 
 chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'update-gsfontmap'
 chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'install-tl-unx/install-tl -profile install-tl-unx/md2pdf-texlive.profile'
-chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'tlmgr install datetime fmtcount enumitem soul framed'
+chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'tlmgr install datetime fmtcount enumitem soul framed changebar'
 
 
 echo "Cleaning up"
