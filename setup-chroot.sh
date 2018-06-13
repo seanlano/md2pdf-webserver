@@ -115,7 +115,7 @@ then
     cp ${SNAP}/snap/install-tl-unx.tar.gz .
     cp ${SNAP}/snap/md2pdf-texlive.profile install-tl-unx/
 else
-    wget https://mirrors.sorengard.com/ctan/systems/texlive/tlnet/install-tl-unx.tar.gz
+    wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
 fi
 # tar will complain about some permissions, we don't mind about that
 tar xvf install-tl-unx.tar.gz --strip-components 1 --directory install-tl-unx 1> /dev/null 2> /dev/null
