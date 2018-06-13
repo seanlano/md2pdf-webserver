@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 '''
 
 global __version__
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 
 
 import argparse
@@ -60,6 +60,7 @@ def main():
     global def_template
     global config_dict
     config_dict = {}
+    global compare_replace
     global static_path
     global html_path
     global chroot_path
@@ -170,6 +171,15 @@ def main():
         logging.critical("Config item %s could not be read from config file at '%s'", e, config_path)
         sys.exit()
 
+    # Read the optional "compare_replace" section from the config file
+    try:
+        compare_replace = conf["compare_replace"]
+        logging.debug("Compare-Replace strings loaded")
+    except KeyError:
+        # No "compare_replace" config exists, this is OK
+        compare_replace = False
+        logging.debug("Compare-Replace strings not found in config file")
+
     logging.debug("Successfully read config from file at '%s'", config_path)
     config_file.close()
 
@@ -272,12 +282,14 @@ class DeleteTimerThread(threading.Thread):
 
 
 class PdfWorkerThread(threading.Thread):
-    def __init__(self, md, template):
+    def __init__(self, input_md, template, compare_mode=False, compare_md=""):
         # Initialise the threading.Thread parent
         super().__init__()
         # Store the passed objects
-        self.md_file = md
+        self.md_file = input_md
         self.latex_template = template
+        self.compare_mode = compare_mode
+        self.compare_md = compare_md
 
     def run(self):
         # Get the full path of the input MD file
@@ -295,20 +307,56 @@ class PdfWorkerThread(threading.Thread):
         # Get the path of the temporary directory inside the chroot
         chroot_tmp = os.path.join("/", os.path.relpath(dirname, chroot_path))
 
-        with open(shell_name, 'wt', encoding="utf-8") as shell_file:
-            arg = "pandoc --filter pandoc-crossref --pdf-engine=xelatex --template=\""
-            arg += template_path
-            arg += "\" -M figPrefix=Figure -M tblPrefix=Table -M secPrefix=Section -M autoSectionLabels=true --highlight-style=tango \""
-            arg += md_name
-            arg += "\" -o \""
-            arg += md_name.replace("md", "pdf")
-            arg += "\""
+        if self.compare_mode:
+            # Write out the special script for doing the latexdiff operation
+            with open(shell_name, 'wt', encoding="utf-8") as shell_file:
+                # Set up all the filenames
+                name_new_md = os.path.basename(self.md_file)
+                name_old_md = os.path.basename(self.compare_md)
+                name_new_latex = name_new_md.replace("md", "latex")
+                name_old_latex = name_old_md.replace("md", "latex")
+                name_diff_latex = name_new_latex.replace(".new","_changes")
 
-            shell_file.write("#!/bin/sh\n\n")
-            shell_file.write("export LC_ALL=C\n")
-            shell_file.write("cd " + chroot_tmp + "\n")
-            shell_file.write("export PATH=/usr/local/texlive/bin/x86_64-linux:/usr/local/bin:/usr/sbin:/usr/bin:/bin\n\n")
-            shell_file.write(arg + "\n")
+                arg = "pandoc --filter pandoc-crossref --pdf-engine=xelatex --template=\""
+                arg += template_path
+                arg += "\" -M figPrefix=Figure -M tblPrefix=Table -M secPrefix=Section -M autoSectionLabels=true --highlight-style=tango \""
+                arg += name_new_md
+                arg += "\" -o \""
+                arg += name_new_latex
+                arg += "\""
+
+                shell_file.write("#!/bin/sh\n\n")
+                shell_file.write("export LC_ALL=C\n")
+                shell_file.write("cd " + chroot_tmp + "\n")
+                shell_file.write("export PATH=/usr/local/texlive/bin/x86_64-linux:/usr/local/bin:/usr/sbin:/usr/bin:/bin\n\n")
+                shell_file.write(arg + "\n")
+
+                # Replace "new" names with "old", and add to the script
+                arg = arg.replace(name_new_md, name_old_md)
+                arg = arg.replace(name_new_latex, name_old_latex)
+                shell_file.write(arg + "\n")
+
+                # Add the calls to latexdiff
+                shell_file.write("latexdiff \"" + name_old_latex + "\" \"" + name_new_latex + "\" > \"" + name_diff_latex + "\"\n")
+
+                # Finally, call xelatex to produce the PDF
+                shell_file.write("xelatex -interaction=batchmode \"" + name_diff_latex + "\"")
+        else:
+            # Write out the normal script for generating PDF
+            with open(shell_name, 'wt', encoding="utf-8") as shell_file:
+                arg = "pandoc --filter pandoc-crossref --pdf-engine=xelatex --template=\""
+                arg += template_path
+                arg += "\" -M figPrefix=Figure -M tblPrefix=Table -M secPrefix=Section -M autoSectionLabels=true --highlight-style=tango \""
+                arg += md_name
+                arg += "\" -o \""
+                arg += md_name.replace("md", "pdf")
+                arg += "\""
+
+                shell_file.write("#!/bin/sh\n\n")
+                shell_file.write("export LC_ALL=C\n")
+                shell_file.write("cd " + chroot_tmp + "\n")
+                shell_file.write("export PATH=/usr/local/texlive/bin/x86_64-linux:/usr/local/bin:/usr/sbin:/usr/bin:/bin\n\n")
+                shell_file.write(arg + "\n")
 
         # Set script to be executable
         os.chmod(shell_name, 0o744)
@@ -319,6 +367,32 @@ class PdfWorkerThread(threading.Thread):
 
         # Create command to call script inside chroot
         arg = "chroot " + chroot_path + " " + shell_name
+
+        # Run "compare replace" operation, if in compare mode and options are set
+        if self.compare_mode and compare_replace:
+            logging.info("Running compare-replace string swaps on input files")
+            name_new_md = os.path.join(dirname, name_new_md)
+            name_new_md_tmp = name_new_md + ".tmp"
+            name_old_md = os.path.join(dirname, name_old_md)
+            name_old_md_tmp = name_old_md + ".tmp"
+            os.rename(name_new_md, name_new_md_tmp)
+            os.rename(name_old_md, name_old_md_tmp)
+
+            for input_md in (name_new_md_tmp, name_old_md_tmp):
+                # Open each file in turn
+                with open(input_md, 'rt', encoding="utf-8") as in_file:
+                    output_file = ""
+                    # Loop over all the lines in the file
+                    for line in in_file:
+                        output_line = line
+                        # For each line, loop through all the replacement pairs
+                        for replace_map in compare_replace:
+                            for key in replace_map:
+                                output_line = output_line.replace(key, replace_map[key])
+                        output_file += output_line
+                    # Write out the replaced file
+                    with open(input_md.replace(".tmp",""), 'w', encoding="utf-8") as out_file:
+                        out_file.write(output_file)
 
         logging.debug("Will execute command: " + arg)
 
@@ -378,6 +452,17 @@ class App:
             template = x_template
         else:
             template = def_template
+
+        ## Check if the client has set the 'compare' header
+        try:
+            x_compare = cherrypy.request.headers.get('x-latex-compare')
+        except:
+            pass
+        if isinstance(x_compare, str):
+            logging.info("Upload has requested 'compare mode'")
+            compare_mode = True
+        else:
+            compare_mode = False
 
         ## Accept the upload file and write it to disk with a temporary name
         with open(upload_file, 'wb') as out:
@@ -456,17 +541,32 @@ class App:
 
         ## Look for a MarkDown file in the extracted directory, and spawn a subprocess to render it
         md_path = False
+        md_path_compare = False
         for file in os.listdir(output_path):
             if file.endswith(".md"):
-                md_path = os.path.join(output_path, file)
-                logging.info("Found MD file: %s", md_path)
-                break
+                tmp_path = os.path.join(output_path, file)
+                logging.info("Found MD file: %s", tmp_path)
+                if compare_mode:
+                    if tmp_path.find("old") > -1:
+                        # Store the name of the "old" MD file
+                        md_path_compare = tmp_path
+                    elif tmp_path.find("new") > -1:
+                        # Store the name of the "new" MD file
+                        md_path = tmp_path
+                else:
+                    # Stop at the first found MD file in normal mode
+                    md_path = tmp_path
+                    break
         if md_path:
             md_basename = os.path.basename(md_path)
             logging.debug("Basename is '%s'", md_basename)
             # Spawn PdfWorkerThread with necessary options
-            thread = PdfWorkerThread(md=md_path, template=template)
-            thread.start()
+            if compare_mode:
+                thread = PdfWorkerThread(input_md=md_path, template=template, compare_mode=True, compare_md=md_path_compare)
+                thread.start()
+            else:
+                thread = PdfWorkerThread(input_md=md_path, template=template)
+                thread.start()
         else:
             report_string = "MD file not found in submitted archive"
 
