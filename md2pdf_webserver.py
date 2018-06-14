@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 '''
 
 global __version__
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 
 
 import argparse
@@ -30,6 +30,7 @@ import shutil
 import sys
 import cherrypy
 import string
+import re
 import random
 import hashlib
 import logging
@@ -271,9 +272,9 @@ class DeleteTimerThread(threading.Thread):
         self.folder = folder
 
     def run(self):
-        # Delete the folder after a 2 minute wait, to save disk space
-        logging.debug("Will remove '%s' in 2 minutes", self.folder)
-        time.sleep(120)
+        # Delete the folder after a 1 minute wait, to save disk space
+        logging.debug("Will remove '%s' in one minute", self.folder)
+        time.sleep(60)
         logging.info("Removing folder '%s'", self.folder)
         try:
             shutil.rmtree(self.folder)
@@ -309,14 +310,15 @@ class PdfWorkerThread(threading.Thread):
 
         if self.compare_mode:
             # Write out the special script for doing the latexdiff operation
-            with open(shell_name, 'wt', encoding="utf-8") as shell_file:
-                # Set up all the filenames
-                name_new_md = os.path.basename(self.md_file)
-                name_old_md = os.path.basename(self.compare_md)
-                name_new_latex = name_new_md.replace("md", "latex")
-                name_old_latex = name_old_md.replace("md", "latex")
-                name_diff_latex = name_new_latex.replace(".new","_changes")
+            # Set up all the filenames
+            name_new_md = os.path.basename(self.md_file)
+            name_old_md = os.path.basename(self.compare_md)
+            name_new_latex = name_new_md.replace("md", "latex")
+            name_old_latex = name_old_md.replace("md", "latex")
+            name_diff_latex = name_new_latex.replace(".new","_changes")
 
+            # Create the first-stage script
+            with open(shell_name, 'wt', encoding="utf-8") as shell_file:
                 arg = "pandoc --filter pandoc-crossref --pdf-engine=xelatex --template=\""
                 arg += template_path
                 arg += "\" -M figPrefix=Figure -M tblPrefix=Table -M secPrefix=Section -M autoSectionLabels=true --highlight-style=tango \""
@@ -336,11 +338,23 @@ class PdfWorkerThread(threading.Thread):
                 arg = arg.replace(name_new_latex, name_old_latex)
                 shell_file.write(arg + "\n")
 
+            # Create the second-stage script
+            shell_name_2nd = shell_name.replace("pandoc-wrapper", "latex-wrapper")
+            with open(shell_name_2nd, 'wt', encoding="utf-8") as shell_file:
+                shell_file.write("#!/bin/sh\n\n")
+                shell_file.write("export LC_ALL=C\n")
+                shell_file.write("cd " + chroot_tmp + "\n")
+                shell_file.write("export PATH=/usr/local/texlive/bin/x86_64-linux:/usr/local/bin:/usr/sbin:/usr/bin:/bin\n\n")
+
                 # Add the calls to latexdiff
-                shell_file.write("latexdiff \"" + name_old_latex + "\" \"" + name_new_latex + "\" > \"" + name_diff_latex + "\"\n")
+                shell_file.write("latexdiff -t CULINECHBAR \"" + name_old_latex + "\" \"" + name_new_latex + "\" > \"" + name_diff_latex + "\"\n")
 
                 # Finally, call xelatex to produce the PDF
                 shell_file.write("xelatex -interaction=batchmode \"" + name_diff_latex + "\"")
+
+            # Set script to be executable
+            os.chmod(shell_name_2nd, 0o744)
+
         else:
             # Write out the normal script for generating PDF
             with open(shell_name, 'wt', encoding="utf-8") as shell_file:
@@ -368,9 +382,9 @@ class PdfWorkerThread(threading.Thread):
         # Create command to call script inside chroot
         arg = "chroot " + chroot_path + " " + shell_name
 
-        # Run "compare replace" operation, if in compare mode and options are set
-        if self.compare_mode and compare_replace:
-            logging.info("Running compare-replace string swaps on input files")
+        # Run compare_replace
+        if self.compare_mode:
+            logging.info("Running compare_replace on input files")
             name_new_md = os.path.join(dirname, name_new_md)
             name_new_md_tmp = name_new_md + ".tmp"
             name_old_md = os.path.join(dirname, name_old_md)
@@ -407,7 +421,50 @@ class PdfWorkerThread(threading.Thread):
             p = subprocess.Popen(arg, shell=True, stdout=log_file, stderr=log_file)
             p.wait()
 
-        # Spawn a new thread, which will delete the folder after 2 minutes
+            # Run the second-stage, if applicable
+            if self.compare_mode:
+                logging.info("Running hypertarget fix on input files")
+                # name_new_latex = os.path.join(dirname, name_new_latex)
+                name_new_latex_tmp = name_new_latex + ".tmp"
+                # name_old_latex = os.path.join(dirname, name_old_latex)
+                name_old_latex_tmp = name_old_latex + ".tmp"
+                os.rename(name_new_latex, name_new_latex_tmp)
+                os.rename(name_old_latex, name_old_latex_tmp)
+
+                for input_latex in (name_new_latex_tmp, name_old_latex_tmp):
+                    # Define regex patterns
+                    logging.debug("Running fix on: %s", input_latex)
+                    hypertarget_pattern = re.compile("(\\\\hypertarget{.*?}\\s?{%?)")
+                    label_end_pattern = re.compile("\\\\label{.*?(}\\s?})")
+                    # Open each file in turn
+                    output_file = ""
+                    with open(input_latex, 'rt', encoding="utf-8") as in_file:
+                        line_ctr = 0
+                        # Loop over all the lines in the file
+                        for line in in_file:
+                            output_line = line
+                            line_ctr += 1
+                            # Run "hypertarget" removal, to fix Pandoc LaTeX source
+                            match = hypertarget_pattern.search(output_line)
+                            if match:
+                                # Completely remove the '\hypertarget' line
+                                output_line = output_line.replace(match.group(1), "")
+                            match = label_end_pattern.search(output_line)
+                            if match:
+                                # Fix up the extra bracket on the line end
+                                output_line = output_line.replace(match.group(1), "}")
+                            output_file += output_line
+                    # Write out the replaced file
+                    output_latex_name = input_latex.replace(".tmp","")
+                    with open(output_latex_name, 'w', encoding="utf-8") as out_file:
+                        out_file.write(output_file)
+                        logging.debug("Wrote out file: %s", output_latex_name)
+                # Run the 2nd stage
+                arg = arg.replace("pandoc-wrapper", "latex-wrapper")
+                p = subprocess.Popen(arg, shell=True, stdout=log_file, stderr=log_file)
+                p.wait()
+
+        # Spawn a new thread, which will delete the folder after one minute
         thread = DeleteTimerThread(dirname)
         thread.start()
 
