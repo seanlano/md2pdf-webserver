@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 '''
 
 global __version__
-__version__ = "0.0.5"
+__version__ = "0.0.6"
 
 
 import argparse
@@ -434,7 +434,7 @@ class PdfWorkerThread(threading.Thread):
                 for input_latex in (name_new_latex_tmp, name_old_latex_tmp):
                     # Define regex patterns
                     logging.debug("Running fix on: %s", input_latex)
-                    hypertarget_pattern = re.compile("(\\\\hypertarget{.*?}\\s?{%?)")
+                    hypertarget_pattern = re.compile("(\\\\hypertarget{.*?}\\s?{%?}?)")
                     label_end_pattern = re.compile("\\\\label{.*?(}\\s?})")
                     # Open each file in turn
                     output_file = ""
