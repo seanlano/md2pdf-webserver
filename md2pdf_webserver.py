@@ -44,7 +44,6 @@ yaml = YAML()
 
 ## TODO:
 # - Spruce up index.html
-# - Properly handle shell special character escaping
 # - Add command line flag to run tlmgr install / update (for extra TeX packages)
 # - Make debug level configurable on the command line
 # - ADD DOCUMENTATION!!!!
@@ -208,6 +207,15 @@ def main():
                 logging.error("Static content '%s' was not found in '%s', this might cause Pandoc to fail", content, static_path)
         if static_content_error and running_as_snap:
             logging.error("Note that md2md2pdf_webserver is running as a Snap package - it might be confined and unable to access absolute paths")
+
+        ## Remove old temporary files
+        logging.info("Deleting files in '" + def_tempdir + "'")
+        try:
+            shutil.rmtree(def_tempdir)
+            os.mkdir(def_tempdir)
+        except:
+            logging.warning("Unable to delete and re-create temporary directory")
+            raise
 
         ## Start the CherryPy server
         def_listen = args.listen
@@ -640,7 +648,6 @@ hash: {}
 ''' .format(size, ufile.filename, input_hash.hexdigest(), report_string, data)
         ## Finally, actually send the response
         return out
-
 
     ## Provide a handler for fetching a compiled PDF
     @cherrypy.expose
