@@ -208,6 +208,37 @@ Jun 20 15:00:43 design-nuc md2pdf-webserver.daemon[1226]: INFO   : [20/Jun/2018:
 
 If the installation has gone well, the listen address has been changed to `0.0.0.0`, and the server is running; clients with `md2pdf-client` should now be able to connect and generate PDFs. They will need to run the command `md2pdf-client --set-default server <hostname or ip>:9090` to set the correct endpoint - and then they can simply "Open With" on a Markdown file and select "md2pdf Client".
 
+## Updating and tweaking TeX Live
+
+The above process will have installed the latest version of TeX Live as of the time that the installation was run. However, it will not be automatically updated. In most cases, this is a good thing - it means the TeX environment stays exactly the same, and so documents will be generated in an identical way. But, there will be times when new TeX updates are desired, or additional packages need to be installed.
+
+If installed from a Snap package, running `tlmgr` inside the TeX chroot can be achieved with the following command:
+
+```bash
+$ sudo chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'tlmgr update --self'
+$ sudo chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'tlmgr update --all'
+```
+
+This will run the `tlmgr` update process, and update all of the TeX packages.
+
+Installing additional packages can be done with a similar command:
+
+```bash
+$ sudo chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'tlmgr <package>'
+```
+
+Similarly, any `tlmgr` command can be run inside the chroot environment. Refer to the `tlmgr` homepage on [the TeX Live website](https://www.tug.org/texlive/tlmgr.html). In this way, using any desired TeX package is possible with `md2pdf`.
+
+If `md2pdf-webserver` is installed manually, the above chroot command will still work as long as the correct path is used.
+
+## Creating LaTeX templates
+
+The templates used by `md2pdf` are derived from Pandoc templates. There are numerous sources that cover making LaTeX documents, and [the Pandoc website](https://pandoc.org/MANUAL.html#templates) also has a section describing how it uses templates.
+
+Look at the template and icons in the [example-static](./example-static) folder as a starting point.
+
+**TO DO**: _Add further template debugging help_
+
 ## License
 
 This project is released under the terms of the GNU Affero GPL version 3 (or
