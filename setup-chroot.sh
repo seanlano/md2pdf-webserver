@@ -143,10 +143,5 @@ chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'update-gsfontma
 chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'iso/install-tl -profile md2pdf-texlive.profile'
 
 
-echo "Cleaning up"
-
-fusermount -u iso/
-
-
 echo
 echo "DONE chroot setup"
