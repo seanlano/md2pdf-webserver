@@ -107,20 +107,6 @@ chmod 555 usr/local/bin/wrapper
 echo ${SNAP_REVISION} >> snap_revision
 
 
-echo "Copying TeX Live installer"
-
-mkdir -p install-tl-unx
-if [ $IS_SNAP == 1 ]
-then
-    cp ${SNAP}/snap/install-tl-unx.tar.gz .
-    cp ${SNAP}/snap/md2pdf-texlive.profile install-tl-unx/
-else
-    wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
-fi
-# tar will complain about some permissions, we don't mind about that
-tar xvf install-tl-unx.tar.gz --strip-components 1 --directory install-tl-unx 1> /dev/null 2> /dev/null
-
-
 if [ $IS_SNAP == 1 ]
 then
     echo "Copying Pandoc"
@@ -139,17 +125,28 @@ dd if=/dev/random of=dev/random bs=1 count=128 1> /dev/null
 dd if=/dev/urandom of=dev/urandom bs=1 count=128 1> /dev/null
 
 
-echo "Running installer"
+echo "Mounting TeX Live ISO installer"
 
+if [ $IS_SNAP == 1 ]
+then
+    cp ${SNAP}/snap/md2pdf-texlive.profile .
+fi
+
+# TODO: Make this work if not running as a Snap
+mkdir -p iso/
+fuseiso -n -p -c iso9660 /var/snap/md2pdf-webserver/common/texlive.iso iso/
+
+
+echo "Running installer"
+# TODO: Make this work if not running as a Snap
 chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'update-gsfontmap'
-chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'install-tl-unx/install-tl -profile install-tl-unx/md2pdf-texlive.profile'
-chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'tlmgr install datetime fmtcount enumitem soul framed changebar'
+chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'iso/install-tl -profile md2pdf-texlive.profile'
+chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'tlmgr install datetime fmtcount enumitem soul framed changebar lastpage'
 
 
 echo "Cleaning up"
 
-rm install-tl-unx.tar.gz
-rm -rf install-tl-unx
+fusermount -u iso/
 
 
 echo
