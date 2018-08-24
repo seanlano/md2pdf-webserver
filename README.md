@@ -47,7 +47,7 @@ Options are available via the `-h` flag:
 usage: md2pdf_webserver [-h] (--run | --check | --install) [-p PORT]
                         [-l ADDRESS]
 
-md2pdf webserver v0.0.1 - A web service for rendering Markdown files into a
+md2pdf webserver v0.1.0 - A web service for rendering Markdown files into a
 PDF via Pandoc and LaTeX
 
 optional arguments:
@@ -58,7 +58,7 @@ optional arguments:
   --check               Prints out the location of the config file, and parses
                         and validates it if it exists
   --install             Performs the initial installation of TeX Live, using
-                        the latest CTAN installer
+                        a TeX Live ISO image
   -p PORT, --port PORT  Port to listen on (overrides value set in config file)
   -l ADDRESS, --listen ADDRESS
                         Local IP address to listen on (overrides value set in
@@ -105,35 +105,64 @@ python3 md2pdf_webserver.py --run
 
 ### Installing LaTeX
 
-After installing the `md2pdf-webserver` package (either as a Snap, or manually), you will need to run the LaTeX installer. This will download the latest TeX Live distribution and configure a chroot environment for it to run in. By using a chroot, the TeX Live setup can remain unchanged, and even be backed-up and copied between servers, preserving the exact configuration - which should result in consistent PDF output.
+After installing the `md2pdf-webserver` package (either as a Snap, or manually), you will need to run the LaTeX installer. This uses a TeX Live ISO image, and configures a chroot environment for it to run in. By using a chroot, the TeX Live setup can remain unchanged, and even be backed-up and copied between servers, preserving the exact configuration - which should result in consistent PDF output.
 
-Note that installing TeX Live will download around 800 MB, which may take quite some time. You will only have to do this once - updates to `md2pdf-webserver` will use the same chroot for LaTeX.
+Note that the TeX Live installer ISO needs to be downloaded manually, and copied into place. You will only have to do this once - updates to `md2pdf-webserver` will use the same chroot for LaTeX conversions.
 
+First, run the `check` command to find where the ISO needs to be copied to:
+
+```bash
+$ sudo md2pdf-webserver --check
+DEBUG  : Setting chroot path to '/var/snap/md2pdf-webserver/common/texlive-chroot'
+DEBUG  : Setting temp path to '/var/snap/md2pdf-webserver/common/texlive-chroot/tmp'
+
+...
+
+CRITICAL: TeX Live ISO installer was not found!
+CRITICAL: Please download the desired TeX Live ISO to '/var/snap/md2pdf-webserver/common/texlive.iso'
 ```
+
+Here we see the path is `/var/snap/md2pdf-webserver/common/texlive.iso`, so copy the installer there.
+
+If running as a Snap, the `fuse-control` slot needs to be connected so that the installer can mount the ISO image. Run the command: `sudo snap connect md2pdf-webserver:fuse-support core:fuse-support`
+
+Then use the `install` flag to kick things off. The following commands will perform these steps:
+
+```bash
+$ sudo cp Downloads/texlive2018-20180414.iso /var/snap/md2pdf-webserver/common/texlive.iso
+
+$ sudo snap connect md2pdf-webserver:fuse-support core:fuse-support
+
 $ sudo md2pdf-webserver --install
 
 DEBUG  : Setting chroot path to '/var/snap/md2pdf-webserver/common/texlive-chroot'
 DEBUG  : Setting temp path to '/var/snap/md2pdf-webserver/common/texlive-chroot/tmp'
+DEBUG  : Compare-Replace strings not found in config file
 DEBUG  : Successfully read config from file at '/var/snap/md2pdf-webserver/common/md2pdf_webserver_config.yaml'
-INFO   : Will install TeX Live into '/var/snap/md2pdf-webserver/common/texlive-chroot', using latest installer from CTAN
+INFO   : Will install TeX Live into '/var/snap/md2pdf-webserver/common/texlive-chroot'
+INFO   : Will use TeX Live ISO located at '/var/snap/md2pdf-webserver/common/texlive.iso'
+INFO   : This installer is running as a Snap. The 'fuse-control' slot needs to be connected.
+INFO   : If errors mentioning /dev/fuse are seen below, run `sudo snap connect md2pdf-webserver:fuse-support core:fuse-support`
 Setting up chroot in /var/snap/md2pdf-webserver/common/texlive-chroot
 SNAP_NAME is 'md2pdf-webserver'
 Creating basic folder structure
-Copying binaries and libraries
 
 ...
 
-Installing TeX Live 2017 from: http://mirror.aarnet.edu.au/pub/CTAN/systems/texlive/tlnet (verified)
+Mounting TeX Live ISO installer
+Running installer
+Automated TeX Live installation using profile: md2pdf-texlive.profile
+Loading iso/tlpkg/texlive.tlpdb
+Installing TeX Live 2018 from: iso (verified)
 Platform: x86_64-linux => 'GNU/Linux on x86_64'
-Distribution: net  (downloading)
-Using URL: http://mirror.aarnet.edu.au/pub/CTAN/systems/texlive/tlnet
-Directory for temporary files: /tmp/IKO3xZJxEo
+Distribution: inst (compressed)
+Directory for temporary files: /tmp/rLghRfZDKS
 Installing to: /usr/local/texlive
-Installing [0001/1095, time/total: ??:??/??:??]: 12many [3k]
-Installing [0002/1095, time/total: 00:00/00:00]: FAQ-en [1k]
-Installing [0003/1095, time/total: 00:01/19:51:53]: MemoirChapStyles [1k]
-Installing [0004/1095, time/total: 00:01/16:09:09]: SIstyle [4k]
-Installing [0005/1095, time/total: 00:01/07:40:38]: SIunits [6k]
+Installing [0001/3590, time/total: ??:??/??:??]: 12many [3k]
+Installing [0002/3590, time/total: 00:00/00:00]: 2up [5k]
+Installing [0003/3590, time/total: 00:00/00:00]: Asana-Math [481k]
+Installing [0004/3590, time/total: 00:00/00:00]: ESIEEcv [2k]
+Installing [0005/3590, time/total: 00:00/00:00]: FAQ-en [1k]
 
 ...
 
@@ -224,7 +253,7 @@ This will run the `tlmgr` update process, and update all of the TeX packages.
 Installing additional packages can be done with a similar command:
 
 ```bash
-$ sudo chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'tlmgr <package>'
+$ sudo chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'tlmgr install <package>'
 ```
 
 Similarly, any `tlmgr` command can be run inside the chroot environment. Refer to the `tlmgr` homepage on [the TeX Live website](https://www.tug.org/texlive/tlmgr.html). In this way, using any desired TeX package is possible with `md2pdf`.
