@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 '''
 
 global __version__
-__version__ = "0.0.6"
+__version__ = "0.1.0"
 
 
 import argparse
@@ -64,6 +64,7 @@ def main():
     global static_path
     global html_path
     global chroot_path
+    global iso_path
     global running_as_snap
 
 
@@ -98,6 +99,7 @@ def main():
     try:
         config_path = os.environ["SNAP_COMMON"]
         chroot_path = os.path.join(config_path, "texlive-chroot")
+        iso_path = os.path.join(config_path, "texlive.iso")
         config_path = os.path.join(config_path, config_name)
         html_path = os.environ["SNAP"]
         html_path = os.path.join(html_path, "snap")
@@ -189,7 +191,7 @@ def main():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--run', action="store_true", help="Start the web service (will continue running in the foreground). Can be combined with other options, or will use stored default values")
     group.add_argument('--check', action="store_true", help="Prints out the location of the config file, and parses and validates it if it exists")
-    group.add_argument('--install', action="store_true", help="Performs the initial installation of TeX Live, using the latest CTAN installer")
+    group.add_argument('--install', action="store_true", help="Performs the initial installation of TeX Live, using a TeX Live ISO image")
     parser.add_argument('-p', '--port', metavar="PORT", type=int, help="Port to listen on (overrides value set in config file)", default=def_port)
     parser.add_argument('-l', '--listen', metavar="ADDRESS", help="Local IP address to listen on (overrides value set in config file)", default=def_listen)
 
@@ -237,10 +239,21 @@ def main():
         logging.info("Config options loaded from file: ")
         yaml.dump(conf, sys.stdout)
         logging.info("Static files can either be absolute paths, or relative to '%s'", static_path)
+        if not(os.path.exists(iso_path)):
+            logging.critical("TeX Live ISO installer was not found!")
+            logging.critical("Please download the desired TeX Live ISO to '%s'", iso_path)
         sys.exit()
+
     elif args.install:
         ## Install TeX Live into a chroot
-        logging.info("Will install TeX Live into '%s', using latest installer from CTAN", chroot_path)
+        logging.info("Will install TeX Live into '%s'", chroot_path)
+
+        if(os.path.exists(iso_path)):
+            logging.info("Will use TeX Live ISO located at '%s'", iso_path)
+        else:
+            logging.critical("TeX Live ISO installer was not found!")
+            logging.critical("Please download the desired TeX Live ISO to '%s'", iso_path)
+            sys.exit()
 
         try:
             os.makedirs(chroot_path, exist_ok=False)
@@ -254,6 +267,8 @@ def main():
             script_path = os.path.join(snap_base, "snap")
             script_path = os.path.join(script_path, "setup-chroot.sh")
             arg = "./setup-chroot.sh " + snap_base
+            logging.info("This installer is running as a Snap. The 'fuse-control' slot needs to be connected.")
+            logging.info("If errors mentioning /dev/fuse are seen below, run `sudo snap connect md2pdf-webserver:fuse-support core:fuse-support`")
         else:
             script_path = "setup-chroot.sh"
             arg = "./setup-chroot.sh"

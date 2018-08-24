@@ -1,5 +1,5 @@
-# TeX Live profile for md2pdf-webserver - tested with TeX Live 2017
-selected_scheme scheme-medium
+# TeX Live profile for md2pdf-webserver - tested with TeX Live 2018
+selected_scheme scheme-full
 TEXDIR /usr/local/texlive
 TEXMFCONFIG $TEXMFSYSCONFIG
 TEXMFHOME $TEXMFLOCAL
