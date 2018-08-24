@@ -141,7 +141,6 @@ echo "Running installer"
 # TODO: Make this work if not running as a Snap
 chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'update-gsfontmap'
 chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'iso/install-tl -profile md2pdf-texlive.profile'
-chroot /var/snap/md2pdf-webserver/common/texlive-chroot wrapper 'tlmgr install datetime fmtcount enumitem soul framed changebar lastpage'
 
 
 echo "Cleaning up"
