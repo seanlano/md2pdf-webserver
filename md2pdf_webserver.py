@@ -191,7 +191,7 @@ def main():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--run', action="store_true", help="Start the web service (will continue running in the foreground). Can be combined with other options, or will use stored default values")
     group.add_argument('--check', action="store_true", help="Prints out the location of the config file, and parses and validates it if it exists")
-    group.add_argument('--install', action="store_true", help="Performs the initial installation of TeX Live, using the latest CTAN installer")
+    group.add_argument('--install', action="store_true", help="Performs the initial installation of TeX Live, using a TeX Live ISO image")
     parser.add_argument('-p', '--port', metavar="PORT", type=int, help="Port to listen on (overrides value set in config file)", default=def_port)
     parser.add_argument('-l', '--listen', metavar="ADDRESS", help="Local IP address to listen on (overrides value set in config file)", default=def_listen)
 
