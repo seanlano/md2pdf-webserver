@@ -18,6 +18,7 @@ echo "Creating basic folder structure"
 mkdir bin
 mkdir usr
 mkdir dev
+mkdir dev-real
 mkdir etc
 mkdir lib
 mkdir tmp
@@ -116,14 +117,12 @@ then
     cp -a ${SNAP}/bin/pandoc-crossref bin/
 fi
 
+echo "Mounting /dev inside chroot"
+bindfs /dev/ dev-real/
 
-echo "Setting up a small amount of entropy into /dev/random"
-echo "(this will be faster if you use the keyboard and mouse!)"
-
-# Hide the output from dd, it's not really helpful in this case
-dd if=/dev/random of=dev/random bs=1 count=128 1> /dev/null
-dd if=/dev/urandom of=dev/urandom bs=1 count=128 1> /dev/null
-
+echo "Linking /dev/random and /dev/urandom inside chroot"
+ln -s dev-real/random dev/random
+ln -s dev-real/urandom dev/urandom
 
 echo "Mounting TeX Live ISO installer"
 
