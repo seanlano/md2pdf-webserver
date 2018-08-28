@@ -208,7 +208,7 @@ def main():
                 static_content_error = True
                 logging.error("Static content '%s' was not found in '%s', this might cause Pandoc to fail", content, static_path)
         if static_content_error and running_as_snap:
-            logging.error("Note that md2md2pdf_webserver is running as a Snap package - it might be confined and unable to access absolute paths")
+            logging.error("Note that md2pdf_webserver is running as a Snap package - it might be confined and unable to access absolute paths")
 
         ## Remove old temporary files
         logging.info("Deleting files in '" + def_tempdir + "'")
@@ -218,6 +218,11 @@ def main():
         except:
             logging.warning("Unable to delete and re-create temporary directory")
             raise
+
+        ## Start the bind mount for /dev
+        arg = 'bindfs ' + '/dev/ ' + os.path.join(chroot_path, 'dev-real')
+        p = subprocess.Popen(arg, shell=True)
+        p.wait()
 
         ## Start the CherryPy server
         def_listen = args.listen
